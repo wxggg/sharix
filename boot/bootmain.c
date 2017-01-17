@@ -33,6 +33,9 @@
 #define SECTSIZE        512
 #define ELFHDR          ((struct elfhdr *)0x10000)      // scratch space
 
+#define RES_ADDR        0x11000
+#define RES_SIZE        4096
+
 /* waitdisk - wait for disk ready */
 static void
 waitdisk(void) {
@@ -101,6 +104,8 @@ bootmain(void) {
     for (; ph < eph; ph ++) {
         readseg(ph->p_va & 0xFFFFFF, ph->p_memsz, ph->p_offset);
     }
+
+    readseg((uintptr_t)RES_ADDR, SECTSIZE * 8, SECTSIZE * 8000);
 
     // call the entry point from the ELF header
     // note: does not return

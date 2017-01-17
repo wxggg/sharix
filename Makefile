@@ -117,13 +117,15 @@ KINCLUDE	+= kern/debug/ \
 			   kern/driver/ \
 			   kern/trap/	\
 			   kern/graphic \
-			   kern/libs
+			   kern/libs	\
+			   kern/font 
 
 KSRCDIR		+= kern/init \
 			   kern/libs \
 			   kern/debug \
 			   kern/driver \
-			   kern/graphic
+			   kern/graphic \
+			   kern/font
 
 KCFLAGS		+= $(addprefix -I,$(KINCLUDE))
 
@@ -136,7 +138,7 @@ kernel = $(call totarget,kernel)
 
 $(kernel): tools/kernel.ld
 
-$(kernel): $(KOBJS)
+$(kernel): $(KOBJS) 
 	@echo + ld $@
 	$(V)$(LD) $(LDFLAGS) -T tools/kernel.ld -o $@ $(KOBJS)
 	@$(OBJDUMP) -S $@ > $(call asmfile,kernel)
@@ -172,11 +174,11 @@ $(call create_target_host,sign,sign)
 # create ucore.img
 UCOREIMG	:= $(call totarget,ucore.img)
 
-$(UCOREIMG): $(kernel) $(bootblock)
-	$(V)dd if=/dev/zero of=$@ count=10000
+$(UCOREIMG): $(kernel) $(bootblock) 
+	$(V)dd if=/dev/zero of=$@ bs=512 count=10000
 	$(V)dd if=$(bootblock) of=$@ conv=notrunc
-	$(V)dd if=$(kernel) of=$@ seek=1 conv=notrunc
-
+	$(V)dd if=$(kernel) of=$@ bs=512 seek=1 conv=notrunc
+	$(V)dd if=./res/ASC16 of=$@ bs=512 seek=8001 conv=notrunc
 $(call create_target,ucore.img)
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>

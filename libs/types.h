@@ -7,6 +7,10 @@
 
 /* Represents true-or-false values */
 typedef int bool;
+typedef int BOOL;
+
+#define FALSE 0
+#define TRUE 1
 
 /* Explicitly-sized versions of integer types */
 typedef char int8_t;
@@ -28,6 +32,28 @@ typedef uint32_t uintptr_t;
 
 /* size_t is used for memory object sizes */
 typedef uintptr_t size_t;
+
+typedef struct rgb_s
+{
+	uint8_t r;
+	uint8_t g;
+	uint8_t b;		
+} rgb_t;
+
+typedef struct point_s
+{
+	int32_t x;
+	int32_t y;
+} point_t;
+
+typedef struct rect_s
+{
+	int32_t left;
+	int32_t top;
+	uint32_t width;
+	uint32_t height;
+//	struct rect_s(int32_t l=0, int32_t t=0, uint32_t w=0, uint32_t h=0):left(l), top(t), width(w), height(h) {}
+} rect_t;
 
 #endif /* !__LIBS_TYPES_H__ */
 

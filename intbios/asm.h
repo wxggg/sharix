@@ -1,5 +1,5 @@
-#ifndef __BOOT_ASM_H__
-#define __BOOT_ASM_H__
+#ifndef __INTBIOS_ASM_H__
+#define __INTBIOS_ASM_H__
 
 /* Assembler macros to create x86 segments */
 
@@ -22,5 +22,8 @@
 #define STA_R       0x2     // Readable (executable segments)
 #define STA_A       0x1     // Accessed
 
-#endif /* !__BOOT_ASM_H__ */
+#define bootinfo_ad	0x0
+
+
+#endif /* !__INTBIOS_ASM_H__ */
 

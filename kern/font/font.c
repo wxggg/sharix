@@ -4,7 +4,7 @@
 
 static uint8_t* p_font_asc16_b = (uint8_t*)(FONT_ASC16_ADDR);
 
-BOOL draw_asc16(char ch, point_t point, Color c)
+BOOL draw_asc16(char ch, point_t point, rgb_t c)
 {
 	uint8_t * p_asc = p_font_asc16_b + (uint8_t)ch * 16;   
 
@@ -13,7 +13,7 @@ BOOL draw_asc16(char ch, point_t point, Color c)
 		for(int x=0; x<ASC16_WIDTH; x++) 
 		{ 
 			if(*p_asc & testbit)
-				_gSetPixel(point.x+x, point.y+y, c); 
+				setpixel(point.x+x, point.y+y, c); 
 			testbit >>= 1;
 		}
 		p_asc ++;
@@ -21,7 +21,7 @@ BOOL draw_asc16(char ch, point_t point, Color c)
 	return TRUE;
 }
 
-BOOL draw_str16(unsigned char* ch, point_t point, Color c)
+BOOL draw_str16(char* ch, point_t point, rgb_t c)
 {
 	unsigned char * p = ch;
 	int x=point.x, y=point.y;

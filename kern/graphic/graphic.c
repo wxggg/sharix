@@ -1,9 +1,16 @@
 #include <graphic.h>
 #include <asm_tool.h>
 #include <font.h>
+#include <bitmap.h>
+#include <color.h>
+#include <editbox.h>
+#include <monitor.h>
 
 const struct BOOTINFO *binfo = (struct BOOTINFO *) ADR_BOOTINFO;
-static Color bgcolor = 0;
+
+struct BOOTINFO* get_bootinfo() {
+	return binfo;
+}
 
 static BOOL is_pixel_valid(int32_t x, int32_t y)
 {
@@ -12,21 +19,25 @@ static BOOL is_pixel_valid(int32_t x, int32_t y)
 	return TRUE;
 }
 
-BOOL _gSetPixel(int32_t x, int32_t y, Color c)
+inline BOOL setpixel(int32_t x, int32_t y, rgb_t c)
 {
-	if(!is_pixel_valid(x, y))
-		return FALSE;
-	uint8_t * pvram = binfo->vram + y*binfo->scrnx + x;
-	*pvram = c;
+//	if(!is_pixel_valid(x, y))
+//		return FALSE;
+	int nBppixel = binfo->bitspixel>>3;
+	uint8_t * pvram = binfo->vram + nBppixel*binfo->scrnx*y + nBppixel*x;
+	*pvram = c.r;
+	*(pvram+1) = c.g;
+	*(pvram+2) = c.b;
 	return TRUE;
 }
 
-Color _gGetPixel(int32_t x, int32_t y)
+rgb_t _gGetPixel(int32_t x, int32_t y)
 {
 	if(!is_pixel_valid(x,y))
-		return 0;
-	uint8_t * pvram = binfo->vram + y*binfo->scrnx + x;
-	return *pvram;
+		return (rgb_t){0,0,0};
+	//uint8_t * pvram = binfo->vram + y*binfo->scrnx + x;
+	//return *pvram;
+	return (rgb_t){0,0,0};
 }
 
 rect_t _gGetScrnRect()
@@ -42,102 +53,77 @@ rect_t _gGetScrnRect()
 
 void graphic_init() 
 {
-	init_palette();
-	init_screen8(binfo->vram, 320, 200);
+	cprintf("graphic_init\n");
+	init_screen8();
 
-	draw_asc16(':', (point_t){22, 2}, black);
-	draw_str16("I am Joker", (point_t){30, 2}, light_red);
-}
-
-void init_palette(void)
-{
-	static uint8_t table_rgb[16 * 3] = {
-		0x00, 0x00, 0x00,	/*  0:黑*/
-		0xff, 0x00, 0x00,	/*  1:亮红*/
-		0x00, 0xff, 0x00,	/*  2:亮绿*/
-		0xff, 0xff, 0x00,	/*  3:亮黄*/
-		0x00, 0x00, 0xff,	/*  4:亮蓝*/
-		0xff, 0x00, 0xff,	/*  5:亮紫*/
-		0x00, 0xff, 0xff,	/*  6:浅亮蓝*/
-		0xff, 0xff, 0xff,	/*  7:白*/
-		0xc6, 0xc6, 0xc6,	/*  8:亮灰 */
-		0x84, 0x00, 0x00,	/*  9:暗红 */
-		0x00, 0x84, 0x00,	/* 10:暗绿 */
-		0x84, 0x84, 0x00,	/* 11:暗黄 */
-		0x00, 0x00, 0x84,	/* 12:暗青 */
-		0x84, 0x00, 0x84,	/* 13:暗紫 */
-		0x00, 0x84, 0x84,	/* 14:浅暗蓝 */
-		0x84, 0x84, 0x84	/* 15:暗灰 */
-	};
-	set_palette(0, 15, table_rgb);
-	return;
-
-}
-
-void set_palette(int start, int end, uint8_t *rgb)
-{
-	int i, eflags;
-	eflags = io_load_eflags();	/*记录中断许可标志的值  */
-	io_cli(); 					/* 将中断许可标志置为0，禁止中断 */
-	io_out8(0x03c8, start);
-	for (i = start; i <= end; i++) {
-		io_out8(0x03c9, rgb[0] / 4);
-		io_out8(0x03c9, rgb[1] / 4);
-		io_out8(0x03c9, rgb[2] / 4);
-		rgb += 3;
-	}
-	io_store_eflags(eflags);	/*复原中断许可标志*/
-	return;
+	draw_asc16('>', (point_t){22, 2}, MediumBlue);
+	draw_str16("Chill out!", (point_t){30, 2}, (rgb_t){32,33,22});
 }
 
 void init_screen8()
 {
-	bgcolor = ld_blue;
+	_gfillrect2((rgb_t){20,40,100}, (rect_t){0,0,binfo->scrnx,binfo->scrny}); 
 
-	_gfillrect2(ld_blue, (rect_t){0,0,320,200});
-	_gfillrect2(ll_blue, (rect_t){0,0,20,200});
-	_gfillrect2(white, (rect_t){0,180, 20,200});
-//	_gfillrect2(light_yellow, (rect_t){0,100,50,180}); 
-
-	_gdrawrect(dark_purple, (rect_t){0, 0, 20, 200});
+	_gdrawrect((rgb_t){100,100,100}, (rect_t){0, 0, 64, 700});
 
 	for(int i=0; i<10; i++)
 	{
-		_gfillrect2(light_green, (rect_t){2, 2+20*i, 16, 16});
-		_gdrawrect(dark_grey, (rect_t){2, 2+20*i, 16, 16});
+		_gfillrect2((rgb_t){200,220,10}, (rect_t){2, 2+70*i, 60, 60});
+		_gdrawrect((rgb_t){32,33,44}, (rect_t){2, 2+70*i, 60, 60});
 	}
 
-	_gdrawline(4, (point_t){20, 20}, (point_t){300, 20});
+	_gdrawline((rgb_t){211,22,32}, (point_t){100, 70}, (point_t){800, 70}); 
+	draw_str16("Rolling in the deep", (point_t){120,20}, Black);
 
+	char buf[100];
+	memset(buf,'\0',100);
+
+	editbox_t eb;
+	eb.point = (point_t){100,100};
+	eb.ch_x = 60;
+	eb.ch_y = 30;
+	eb.bg_c = Pink;
+	eb.text_c = Black;
+	eb.ch = buf;
+	eb.ch_size = 100;
+	eb.cur_x = eb.cur_y = 0;
+	
+	draw_editbox(eb);
+ 	getcontent(&eb);
+	
 
 	return;
 }
 
-void draw_mouse(char *mouse) 
+void draw_editbox(editbox_t eb) {
+	_gfillrect2(eb.bg_c, (rect_t){eb.point.x, eb.point.y, eb.ch_x*ASC16_WIDTH, eb.ch_y*ASC16_HEIGHT});
+}
+
+void draw_mouse(rgb_t *mouse) 
 {
 	rect_t rect = {30,40,16,16};
 	_gfillrect(mouse, rect);
 }
 
-void _gdrawline(Color c, point_t p1, point_t p2)
+void _gdrawline(rgb_t c, point_t p1, point_t p2)
 {
 	BOOL type = (p2.x-p1.x) > (p2.y-p1.y);
 	if(type) {
 		float yt1 = p1.y, dy = (float)(p2.y-p1.y)/(p2.x-p1.x);
 		int xt1=p1.x;
 		for(;yt1<=p2.y && xt1<=p2.x; yt1+=dy, xt1++)
-			_gSetPixel(xt1, (int)yt1, c);
+			setpixel(xt1,yt1,c);
 	} else{
 		float xt2 = p1.x, dx = (float)(p2.x-p1.x)/(p2.y-p1.y);
 		int yt2 = p1.y;
 		for(;xt2<=p2.x && yt2<=p2.y; xt2+=dx, yt2++)
-			_gSetPixel((int)xt2, yt2, c);
+			setpixel(xt2, yt2,c);
 	}
 
 
 }
 
-void _gdrawrect(Color c, rect_t	rect)
+void _gdrawrect(rgb_t c, rect_t	rect)
 {
 	int x1 = rect.left, x2 = rect.left+rect.width-1;
 	int y1 = rect.top, y2 = rect.top+rect.height-1;
@@ -147,25 +133,21 @@ void _gdrawrect(Color c, rect_t	rect)
 	_gdrawline(c, (point_t){x1, y2}, (point_t){x2, y2});
 }
 
-void _gfillrect(char *buf, rect_t rect)
+void _gfillrect(rgb_t *buf, rect_t rect)
 {	
-	for(int i=0; i<rect.height; i++) {
-		for(int j=0; j<rect.width; j++) {
-			binfo->vram[(rect.top+i)*binfo->scrnx+rect.left+j] = buf[i*rect.width+j];
-		}
-	}
+	for(int x=rect.left; x<rect.left+rect.width; x++)
+		for(int y=rect.top; y<rect.top+rect.height; y++) 
+			setpixel(x, y, buf[(x-rect.left) + rect.width*(y-rect.top)]);
 }
 
-void _gfillrect2(Color c, rect_t rect)
+void _gfillrect2(rgb_t c, rect_t rect)
 {
-	for(int i=0; i<rect.height; i++) {
-		for(int j=0; j<rect.width; j++) {
-			binfo->vram[(rect.top+i)*binfo->scrnx+rect.left+j] = c;
-		}
-	}
+	for(int x=rect.left; x<rect.left+rect.width; x++)
+		for(int y=rect.top; y<rect.top+rect.height; y++) 
+			setpixel(x, y, c);
 }
 
-void init_mouse_cursor8(char *mouse)
+void init_mouse_cursor8(rgb_t *mouse)
 {
 	static char cursor[16][16] = {
 		"**************..",
@@ -190,13 +172,13 @@ void init_mouse_cursor8(char *mouse)
 	for (y = 0; y < 16; y++) {
 		for (x = 0; x < 16; x++) {
 			if (cursor[y][x] == '*') {
-				mouse[y * 16 + x] = COL8_00FF00;
+				mouse[y * 16 + x] = LightPink;
 			}
 			if (cursor[y][x] == 'O') {
-				mouse[y * 16 + x] = COL8_FFFFFF;
+				mouse[y * 16 + x] = Navy;
 			}
 			if (cursor[y][x] == '.') {
-				mouse[y * 16 + x] = bgcolor;
+				mouse[y * 16 + x] = BlueViolet;
 			}
 		}
 	}

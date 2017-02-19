@@ -4,6 +4,10 @@
 #include <monitor.h>
 #include <kdebug.h>
 
+#include <font.h>
+#include <graphic.h>
+#include <color.h>
+
 /* *
  * Simple command-line kernel monitor useful for controlling the
  * kernel and exploring the system interactively.
@@ -20,7 +24,10 @@ static struct command commands[] = {
     {"help", "Display this list of commands.", mon_help},
     {"kerninfo", "Display information about the kernel.", mon_kerninfo},
     {"backtrace", "Print backtrace of stack frame.", mon_backtrace},
+    {"bootinfo", "show bootinfo", mon_bootinfo}
 };
+
+int toc;
 
 #define NCOMMANDS (sizeof(commands)/sizeof(struct command))
 
@@ -58,7 +65,7 @@ parse(char *buf, char **argv) {
  * runcmd - parse the input string, split it into separated arguments
  * and then lookup and invoke some related commands/
  * */
-static int
+int
 runcmd(char *buf, struct trapframe *tf) {
     char *argv[MAXARGS];
     int argc = parse(buf, argv);
@@ -79,16 +86,20 @@ runcmd(char *buf, struct trapframe *tf) {
 
 void
 monitor(struct trapframe *tf) {
+    cputchar('&');
     cprintf("Welcome to the kernel debug monitor!!\n");
     cprintf("Type 'help' for a list of commands.\n");
-
+    toc = 0;
     char *buf;
     while (1) {
-        if ((buf = readline("K> ")) != NULL) {
-//            if (runcmd(buf, tf) < 0) {
-//                break;
-//            }
+        if(toc == 0) {
+           if ((buf = readline("K> ")) != NULL) {
+                if (runcmd(buf, tf) < 0) {
+                    break;
+                }
+            } 
         }
+        
     }
 }
 
@@ -98,7 +109,10 @@ mon_help(int argc, char **argv, struct trapframe *tf) {
     int i;
     for (i = 0; i < NCOMMANDS; i ++) {
         cprintf("%s - %s\n", commands[i].name, commands[i].desc);
+        draw_str16(commands[i].name, (point_t){20, 40+i*16}, (rgb_t){43,43,43});
     }
+    cputchar('*');
+    _gfillrect2(MediumBlue, (rect_t){200,200,500,500});
     return 0;
 }
 
@@ -111,6 +125,22 @@ mon_kerninfo(int argc, char **argv, struct trapframe *tf) {
     print_kerninfo();
     return 0;
 }
+
+/* *
+ * mon_bootinfo - call print_kerninfo in kern/debug/kdebug.c to
+ * print the memory occupancy in kernel.
+ * */
+int
+mon_bootinfo(int argc, char **argv, struct trapframe *tf) {
+    struct BOOTINFO* pboot = get_bootinfo();
+    cprintf("uint8_t: cyls=%d leds=%x  ", pboot->cyls, pboot->leds); 
+    cprintf("vmode=%x reserve=%x\n", pboot->vmode, pboot->reserve);
+    cprintf("uint16_t: scrnx=%d scrny=%d\n", pboot->scrnx, pboot->scrny);
+    cprintf("uint8_t: bitspixel=%d mem_model=%d\n", pboot->bitspixel, pboot->mem_model);
+    cprintf("uint8_t: vram=%x\n", pboot->vram);    
+    return 0;
+}
+
 
 /* *
  * mon_backtrace - call print_stackframe in kern/debug/kdebug.c to

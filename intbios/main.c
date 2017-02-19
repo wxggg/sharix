@@ -89,7 +89,7 @@ readseg(uintptr_t va, uint32_t count, uint32_t offset) {
 void
 bootmain(void) {
     // read the 1st page off disk
-    readseg((uintptr_t)ELFHDR, SECTSIZE * 8, 0);
+    readseg((uintptr_t)ELFHDR, SECTSIZE * 8, SECTSIZE * 2);
 
     // is this a valid ELF?
     if (ELFHDR->e_magic != ELF_MAGIC) {
@@ -102,10 +102,10 @@ bootmain(void) {
     ph = (struct proghdr *)((uintptr_t)ELFHDR + ELFHDR->e_phoff);
     eph = ph + ELFHDR->e_phnum;
     for (; ph < eph; ph ++) {
-        readseg(ph->p_va & 0xFFFFFF, ph->p_memsz, ph->p_offset);
+        readseg(ph->p_va & 0xFFFFFF, ph->p_memsz, SECTSIZE*2+ph->p_offset);
     }
 
-    readseg((uintptr_t)RES_ADDR, SECTSIZE * 8, SECTSIZE * 8000);
+    readseg((uintptr_t)RES_ADDR, SECTSIZE * (8+116), SECTSIZE * 8000);
 
     // call the entry point from the ELF header
     // note: does not return
@@ -116,6 +116,20 @@ bad:
     outw(0x8A00, 0x8E00);
 
     /* do nothing */
-    while (1);
+//    while (1);
 }
+
+
+
+
+
+
+
+
+ 
+
+
+ 
+
+    
 

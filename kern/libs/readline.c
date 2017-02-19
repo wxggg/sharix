@@ -3,6 +3,10 @@
 #define BUFSIZE 1024
 static char buf[BUFSIZE];
 
+static int j = 0;
+
+#include <font.h>
+
 /* *
  * readline - get a line from stdin
  * @prompt:     the string to be written to stdout
@@ -26,7 +30,7 @@ readline(const char *prompt) {
     if (prompt != NULL) {
         cprintf("%s", prompt);
     }
-    int i = 0, c;
+    int i = 0 , c;
     while (1) {
         c = getchar();
         if (c < 0) {
@@ -35,6 +39,7 @@ readline(const char *prompt) {
         else if (c >= ' ' && i < BUFSIZE - 1) {
             cputchar(c);
             buf[i ++] = c;
+            draw_asc16(c, (point_t){20+8*i, 20+16*j}, (rgb_t){32,32,32});
         }
         else if (c == '\b' && i > 0) {
             cputchar(c);
@@ -43,6 +48,7 @@ readline(const char *prompt) {
         else if (c == '\n' || c == '\r') {
             cputchar(c);
             buf[i] = '\0';
+            j++;
             return buf;
         }
     }

@@ -118,14 +118,16 @@ KINCLUDE	+= kern/debug/ \
 			   kern/trap/	\
 			   kern/graphic \
 			   kern/libs	\
-			   kern/font 
+			   kern/font \
+			   kern/component
 
 KSRCDIR		+= kern/init \
 			   kern/libs \
 			   kern/debug \
 			   kern/driver \
 			   kern/graphic \
-			   kern/font
+			   kern/font \
+			   kern/component
 
 KCFLAGS		+= $(addprefix -I,$(KINCLUDE))
 
@@ -165,20 +167,44 @@ $(call create_target,bootblock)
 
 # -------------------------------------------------------------------
 
+# create bootblock
+intbiosfiles = $(call listf_cc,intbios)
+$(foreach f,$(intbiosfiles),$(call cc_compile,$(f),$(CC),$(CFLAGS) -Os -nostdinc))
+
+intbiosblock = $(call totarget,intbiosblock)
+
+$(intbiosblock): $(call toobj,intbios/asmhead.S) $(call toobj,$(intbiosfiles)) | $(call totarget,sign_intbios)
+	@echo + ld $@
+	$(V)$(LD) $(LDFLAGS) -N -e asmstart -Ttext 0x7E00 $^ -o $(call toobj,intbiosblock)
+	@$(OBJDUMP) -S $(call objfile,intbiosblock) > $(call asmfile,intbiosblock)
+	@$(OBJCOPY) -S -O binary $(call objfile,intbiosblock) $(call outfile,intbiosblock)
+	@$(call totarget,sign_intbios) $(call outfile,intbiosblock) $(intbiosblock)
+
+$(call create_target,intbiosblock)
+
+# -------------------------------------------------------------------
+
 # create 'sign' tools
 $(call add_files_host,tools/sign.c,sign,sign)
 $(call create_target_host,sign,sign)
+
+# create 'sign_intbios' tools
+$(call add_files_host,tools/sign_intbios.c,sign_intbios,sign_intbios)
+$(call create_target_host,sign_intbios,sign_intbios)
 
 # -------------------------------------------------------------------
 
 # create ucore.img
 UCOREIMG	:= $(call totarget,ucore.img)
 
-$(UCOREIMG): $(kernel) $(bootblock) 
+$(UCOREIMG): $(kernel) $(bootblock) $(intbiosblock)
 	$(V)dd if=/dev/zero of=$@ bs=512 count=10000
 	$(V)dd if=$(bootblock) of=$@ conv=notrunc
-	$(V)dd if=$(kernel) of=$@ bs=512 seek=1 conv=notrunc
+	$(V)dd if=$(intbiosblock) of=$@ bs=512 seek=1 conv=notrunc
+	$(V)dd if=$(kernel) of=$@ bs=512 seek=3 conv=notrunc
 	$(V)dd if=./res/ASC16 of=$@ bs=512 seek=8001 conv=notrunc
+	$(V)dd if=./res/icon.bmp of=$@ bs=512 seek=8009 conv=notrunc
+	$(V)dd if=./res/bg.bmp of=$@ bs=512 seek=8201 conv=notrunc
 $(call create_target,ucore.img)
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>

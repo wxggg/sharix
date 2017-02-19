@@ -1,93 +1,60 @@
-#include <asm.h>
+.code16
+.section ".text"
+.global start
 
-# Start the CPU: switch to 32-bit protected mode, jump into C.
-# The BIOS loads this code from the first sector of the hard disk into
-# memory at physical address 0x7c00 and starts executing in real mode
-# with %cs=0 %ip=7c00.
 
-.set PROT_MODE_CSEG,        0x8                     # kernel code segment selector
-.set PROT_MODE_DSEG,        0x10                    # kernel data segment selector
-.set CR0_PE_ON,             0x1                     # protected mode enable flag
- 
-
-# start address should be 0:7c00, in real mode, the beginning address of the running bootloader
-.globl start
 start:
-.code16                                             # Assemble for 16-bit mode
-    cli                                             # Disable interrupts
-    cld                                             # String operations increment
+	xorw %ax, %ax
+	movw %ax, %ds
+	movw %ax, %es
+	movw %ax, %ss 
 
-    # Set up the important data segment registers (DS, ES, SS).
-    xorw %ax, %ax                                   # Segment number zero
-    movw %ax, %ds                                   # -> Data Segment
-    movw %ax, %es                                   # -> Extra Segment
-    movw %ax, %ss                                   # -> Stack Segment
+    movw $0x800, %di
+    jmp main
 
-    movw $0x0013, %ax 
-    int $0x10  
- 
- 
+#-------------------------------------------------------------------
+# 从硬盘读取内核到内存
+#-------------------------------------------------------------------
+disk_addr_packet:
+    .byte   0x10                        # [0] size of packet 16 bytes
+    .byte   0x00                        # [1] reserved always 0
+    .word   0x01                        # [2] blocks to read
+    .word   0x00                        # [6] transfer buffer(16 bit segment)
+    .word   0x00                        # [6] transfer buffer(16 bit offset)
+    .long   0x01                        # [8] starting LBA
+    .long   0x00                        # [12]used for upper part of 48 bit LBAs
 
-    # Enable A20:
-    #  For backwards compatibility with the earliest PCs, physical
-    #  address line 20 is tied low, so that addresses higher than
-    #  1MB wrap around to zero by default. This code undoes this.
-seta20.1:
-    inb $0x64, %al                                  # Wait for not busy
-    testb $0x2, %al
-    jnz seta20.1
+read_a_sect_hd:
+    lea     disk_addr_packet,   %si
+    movb    $0x42,              %ah
+    movb    $0x80,              %dl
+    int     $0x13
+    ret
 
-    movb $0xd1, %al                                 # 0xd1 -> port 0x64
-    outb %al, $0x64
+read_intbios:
+	lea		disk_addr_packet, %si
+	movw	$0x7e00>>4, 6(%si)
+	xorw 	%cx, %cx
+loop:	
+	call    read_a_sect_hd
+    lea     disk_addr_packet,   %si
+    movl    8(%si),             %eax
+    addl    $0x01,              %eax
+    movl    %eax,               (disk_addr_packet + 8)
 
-seta20.2:
-    inb $0x64, %al                                  # Wait for not busy
-    testb $0x2, %al
-    jnz seta20.2
+    movl    6(%si),             %eax
+    addl    $512>>4,            %eax
+    movl    %eax,               (disk_addr_packet + 6)
 
-    movb $0xdf, %al                                 # 0xdf -> port 0x60
-    outb %al, $0x60
+	incw	%cx
+	cmpw	$0x02+1, %cx
+	jne		loop
+	
+	ret 
 
-    # Switch from real to protected mode, using a bootstrap GDT
-    # and segment translation that makes virtual addresses
-    # identical to physical addresses, so that the
-    # effective memory map does not change during the switch.
-    lgdt gdtdesc
-    movl %cr0, %eax
-    orl $CR0_PE_ON, %eax
-    movl %eax, %cr0
+main:
+	call read_intbios
+	jmp 0x7e00
 
-    # Jump to next instruction, but in 32-bit code segment.
-    # Switches processor into 32-bit mode.
-    ljmp $PROT_MODE_CSEG, $protcseg
-
-.code32                                             # Assemble for 32-bit mode
-protcseg:
-    # Set up the protected-mode data segment registers
-    movw $PROT_MODE_DSEG, %ax                       # Our data segment selector
-    movw %ax, %ds                                   # -> DS: Data Segment
-    movw %ax, %es                                   # -> ES: Extra Segment
-    movw %ax, %fs                                   # -> FS
-    movw %ax, %gs                                   # -> GS
-    movw %ax, %ss                                   # -> SS: Stack Segment
-
-    # Set up the stack pointer and call into C. The stack region is from 0--start(0x7c00)
-    movl $0x0, %ebp
-    movl $start, %esp
-    
-    call bootmain
- 
-
-.data
-# Bootstrap GDT
-.p2align 2                                          # force 4 byte alignment
-gdt:
-    SEG_NULLASM                                     # null seg
-    SEG_ASM(STA_X|STA_R, 0x0, 0xffffffff)           # code seg for bootloader and kernel
-    SEG_ASM(STA_W, 0x0, 0xffffffff)                 # data seg for bootloader and kernel
-
-gdtdesc:
-    .word 0x17                                      # sizeof(gdt) - 1
-    .long gdt                                       # address gdt
-
-
+spin:
+	jmp spin

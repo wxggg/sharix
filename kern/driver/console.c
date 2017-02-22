@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <kbdreg.h>
+#include <trap.h>
 
 /* stupid I/O delay routine necessitated by historical PC design flaws */
 static void
@@ -13,28 +14,6 @@ delay(void) {
     inb(0x84);
 }
 
-/***** Serial I/O code *****/
-#define COM1            0x3F8
-
-#define COM_RX          0       // In:  Receive buffer (DLAB=0)
-#define COM_TX          0       // Out: Transmit buffer (DLAB=0)
-#define COM_DLL         0       // Out: Divisor Latch Low (DLAB=1)
-#define COM_DLM         1       // Out: Divisor Latch High (DLAB=1)
-#define COM_IER         1       // Out: Interrupt Enable Register
-#define COM_IER_RDI     0x01    // Enable receiver data interrupt
-#define COM_IIR         2       // In:  Interrupt ID Register
-#define COM_FCR         2       // Out: FIFO Control Register
-#define COM_LCR         3       // Out: Line Control Register
-#define COM_LCR_DLAB    0x80    // Divisor latch access bit
-#define COM_LCR_WLEN8   0x03    // Wordlength: 8 bits
-#define COM_MCR         4       // Out: Modem Control Register
-#define COM_MCR_RTS     0x02    // RTS complement
-#define COM_MCR_DTR     0x01    // DTR complement
-#define COM_MCR_OUT2    0x08    // Out2 complement
-#define COM_LSR         5       // In:  Line Status Register
-#define COM_LSR_DATA    0x01    // Data available
-#define COM_LSR_TXRDY   0x20    // Transmit buffer avail
-#define COM_LSR_TSRE    0x40    // Transmitter off
 
 #define MONO_BASE       0x3B4
 #define MONO_BUF        0xB0000 
@@ -45,32 +24,7 @@ delay(void) {
 #define LPTPORT         0x378
   
 
-static bool serial_exists = 0;
 
-static void
-serial_init(void) {
-    // Turn off the FIFO
-    outb(COM1 + COM_FCR, 0);
-
-    // Set speed; requires DLAB latch
-    outb(COM1 + COM_LCR, COM_LCR_DLAB);
-    outb(COM1 + COM_DLL, (uint8_t) (115200 / 9600));
-    outb(COM1 + COM_DLM, 0);
-
-    // 8 data bits, 1 stop bit, parity off; turn off DLAB latch
-    outb(COM1 + COM_LCR, COM_LCR_WLEN8 & ~COM_LCR_DLAB);
-
-    // No modem controls
-    outb(COM1 + COM_MCR, 0);
-    // Enable rcv interrupts
-    outb(COM1 + COM_IER, COM_IER_RDI);
-
-    // Clear any preexisting overrun indications and interrupts
-    // Serial port doesn't exist if COM_LSR returns 0xFF
-    serial_exists = (inb(COM1 + COM_LSR) != 0xFF);
-    (void) inb(COM1+COM_IIR);
-    (void) inb(COM1+COM_RX);
-}
 
 /* lpt_putc - copy console output to parallel port */
 static void
@@ -85,15 +39,6 @@ lpt_putc(int c) {
 }
 
 
-/* serial_putc - print character to serial port */
-static void
-serial_putc(int c) {
-    int i;
-    for (i = 0; !(inb(COM1 + COM_LSR) & COM_LSR_TXRDY) && i < 12800; i ++) {
-        delay();
-    }
-    outb(COM1 + COM_TX, c);
-}
 
 /* *
  * Here we manage the console input buffer, where we stash characters
@@ -126,22 +71,6 @@ cons_intr(int (*proc)(void)) {
     }
 }
 
-/* serial_proc_data - get data from serial port */
-static int
-serial_proc_data(void) {
-    if (!(inb(COM1 + COM_LSR) & COM_LSR_DATA)) {
-        return -1;
-    }
-    return inb(COM1 + COM_RX);
-}
-
-/* serial_intr - try to feed input characters from serial port */
-void
-serial_intr(void) {
-    if (serial_exists) {
-        cons_intr(serial_proc_data);
-    }
-}
 
 /***** Keyboard input code *****/
 
@@ -300,23 +229,19 @@ static void
 kbd_init(void) {
     // drain the kbd buffer
     kbd_intr();
+    pic_enable(IRQ_KBD);
 }
 
 /* cons_init - initializes the console devices */
 void
 cons_init(void) { 
-    serial_init();
     kbd_init();
-    if (!serial_exists) {
-        cprintf("serial port does not exist!!\n");
-    }
 }
 
 /* cons_putc - print a single character @c to console devices */
 void
 cons_putc(int c) {
     lpt_putc(c); 
-    serial_putc(c);
 }
 
 /* *
@@ -330,7 +255,6 @@ cons_getc(void) {
     // poll for any pending input characters,
     // so that this function works even when interrupts are disabled
     // (e.g., when called from the kernel monitor).
-    serial_intr();
     kbd_intr();
 
     // grab the next character from the input buffer.

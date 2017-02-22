@@ -5,6 +5,9 @@
 #include <monitor.h>
 #include <assert.h>
 #include <graphic.h>
+#include <picirq.h>
+#include <trap.h>
+#include <intr.h>
 
 int kern_init(void) __attribute__((noreturn));
 
@@ -19,6 +22,12 @@ kern_init(void) {
     const char *message = "Sharix os is loading ...";
     cprintf("%s\n\n", message);
 
+    cons_init();
+
+    pic_init();
+    idt_init();
+
+    intr_enable(); 
 
     graphic_init();
 
@@ -27,6 +36,6 @@ kern_init(void) {
     draw_mouse(buff);
 
     while (1) {
-        monitor(NULL);
+//        monitor(NULL);
     }
 }

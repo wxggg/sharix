@@ -1,13 +1,16 @@
 #include <editbox.h>
 #include <font.h>
-#include <monitor.h>
+#include <kdebug.h>
+#include <stringbuffer.h>
 
+keybuf_t kb;
 
 void getcontent(editbox_t *peb) 
 {
+    keybuf_init(&kb);
 	while(1) {
 		edit_readline(peb);
-        edit_run(peb);
+        edit_runcmd(peb);
 	} 
 }
 
@@ -45,21 +48,18 @@ void edit_readline(editbox_t *peb)
     int i = 0 , c;
     memset(peb->ch,'\0',peb->ch_size);
     while (1) {
-        c = getchar();
+        while((c=keybuf_pop(&kb)) == 0);
         if (c < 0) {
             return NULL;
         }
         else if (c >= ' ' && i < 800 - 1) {
-            cputchar(c);
             peb->ch[i ++] = c;
             edit_putchar(c, peb);
         }
         else if (c == '\b' && i > 0) {
-            cputchar(c);
             i --;
         }
         else if (c == '\n' || c == '\r') {
-            cputchar(c);
             peb->ch[i] = '\0';  
             peb->cur_x = 0;
 			peb->cur_y ++;
@@ -69,7 +69,7 @@ void edit_readline(editbox_t *peb)
     }
 }
 
-void edit_run(editbox_t *peb)
+void edit_runcmd(editbox_t *peb)
 {   
     if(strcmp(peb->ch, "hello") == 0)
         edit_putstr("great\n", peb);
@@ -77,4 +77,7 @@ void edit_run(editbox_t *peb)
         draw_bmp_test();
     else if(strcmp(peb->ch, "who are you") == 0)
         edit_putstr("I am joker\n", peb);
+    else if(strcmp(peb->ch, "kerninfo") == 0)
+        print_kerninfo();
+    else;
 }

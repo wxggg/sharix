@@ -2,6 +2,9 @@
 #define _KERN_EDITBOX_H 
 
 #include <types.h>
+#include <stringbuffer.h>
+
+extern keybuf_t kb;
 
 typedef struct editbox_s
 {

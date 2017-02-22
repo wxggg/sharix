@@ -25,6 +25,22 @@ static inline void insl(uint32_t port, void *addr, int cnt) __attribute__((alway
 static inline void outb(uint16_t port, uint8_t data) __attribute__((always_inline));
 static inline void outw(uint16_t port, uint16_t data) __attribute__((always_inline));
 static inline uint32_t read_ebp(void) __attribute__((always_inline));
+static inline void breakpoint(void) __attribute__((always_inline));
+static inline uint32_t read_dr(unsigned regnum) __attribute__((always_inline));
+static inline void write_dr(unsigned regnum, uint32_t value) __attribute__((always_inline));
+
+/* Pseudo-descriptors used for LGDT, LLDT(not used) and LIDT instructions. */
+struct pseudodesc {
+    uint16_t pd_lim;        // Limit
+    uintptr_t pd_base;      // Base address
+} __attribute__ ((packed));
+
+static inline void lidt(struct pseudodesc *pd) __attribute__((always_inline));
+static inline void sti(void) __attribute__((always_inline));
+static inline void cli(void) __attribute__((always_inline));
+static inline void ltr(uint16_t sel) __attribute__((always_inline));
+static inline uint32_t read_eflags(void) __attribute__((always_inline));
+static inline void write_eflags(uint32_t eflags) __attribute__((always_inline));
 
 static inline uint8_t
 inb(uint16_t port) {
@@ -58,6 +74,69 @@ read_ebp(void) {
     uint32_t ebp;
     asm volatile ("movl %%ebp, %0" : "=r" (ebp));
     return ebp;
+}
+
+static inline void
+breakpoint(void) {
+    asm volatile ("int $3");
+}
+
+static inline uint32_t
+read_dr(unsigned regnum) {
+    uint32_t value = 0;
+    switch (regnum) {
+    case 0: asm volatile ("movl %%db0, %0" : "=r" (value)); break;
+    case 1: asm volatile ("movl %%db1, %0" : "=r" (value)); break;
+    case 2: asm volatile ("movl %%db2, %0" : "=r" (value)); break;
+    case 3: asm volatile ("movl %%db3, %0" : "=r" (value)); break;
+    case 6: asm volatile ("movl %%db6, %0" : "=r" (value)); break;
+    case 7: asm volatile ("movl %%db7, %0" : "=r" (value)); break;
+    }
+    return value;
+}
+
+static void
+write_dr(unsigned regnum, uint32_t value) {
+    switch (regnum) {
+    case 0: asm volatile ("movl %0, %%db0" :: "r" (value)); break;
+    case 1: asm volatile ("movl %0, %%db1" :: "r" (value)); break;
+    case 2: asm volatile ("movl %0, %%db2" :: "r" (value)); break;
+    case 3: asm volatile ("movl %0, %%db3" :: "r" (value)); break;
+    case 6: asm volatile ("movl %0, %%db6" :: "r" (value)); break;
+    case 7: asm volatile ("movl %0, %%db7" :: "r" (value)); break;
+    }
+}
+
+static inline void
+lidt(struct pseudodesc *pd) {
+    asm volatile ("lidt (%0)" :: "r" (pd) : "memory");
+}
+
+static inline void
+sti(void) {
+    asm volatile ("sti");
+}
+
+static inline void
+cli(void) {
+    asm volatile ("cli" ::: "memory");
+}
+
+static inline void
+ltr(uint16_t sel) {
+    asm volatile ("ltr %0" :: "r" (sel) : "memory");
+}
+
+static inline uint32_t
+read_eflags(void) {
+    uint32_t eflags;
+    asm volatile ("pushfl; popl %0" : "=r" (eflags));
+    return eflags;
+}
+
+static inline void
+write_eflags(uint32_t eflags) {
+    asm volatile ("pushl %0; popfl" :: "r" (eflags));
 }
 
 static inline int __strcmp(const char *s1, const char *s2) __attribute__((always_inline));

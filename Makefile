@@ -120,7 +120,8 @@ KINCLUDE	+= kern/debug/ \
 			   kern/libs	\
 			   kern/font \
 			   kern/component \
-			   kern/mm
+			   kern/mm 	\
+			   kern/init
 
 KSRCDIR		+= kern/init \
 			   kern/libs \

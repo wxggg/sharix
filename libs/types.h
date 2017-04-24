@@ -55,5 +55,14 @@ typedef struct rect_s
 //	struct rect_s(int32_t l=0, int32_t t=0, uint32_t w=0, uint32_t h=0):left(l), top(t), width(w), height(h) {}
 } rect_t;
 
+#define ROUND_DOWN(a, n) ({size_t __a = (size_t)(a);		\
+						(typeof(a))(__a - __a%(n));})
+
+#define ROUND_UP(a, n) ({size_t __n = (size_t)n; 			\
+						(typeof(a))(ROUND_DOWN((size_t)(a) + __n-1, __n));})
+
+#define offsetof(type, member) 	((size_t)(&((type*)0)->member))
+#define tostruct(ptr, type, member)	((type*)((char*)(ptr) - offsetof(type, member)))
+
 #endif /* !__LIBS_TYPES_H__ */
 

@@ -5,8 +5,9 @@
 #include <color.h>
 #include <editbox.h>
 #include <monitor.h>
+#include <memlayout.h>
 
-const struct BOOTINFO *binfo = (struct BOOTINFO *) ADR_BOOTINFO;
+const struct BOOTINFO *binfo = (struct BOOTINFO *) (ADR_BOOTINFO);
 
 struct BOOTINFO* get_bootinfo() {
 	return binfo;
@@ -24,7 +25,7 @@ inline BOOL setpixel(int32_t x, int32_t y, rgb_t c)
 //	if(!is_pixel_valid(x, y))
 //		return FALSE;
 	int nBppixel = binfo->bitspixel>>3;
-	uint8_t * pvram = binfo->vram + nBppixel*binfo->scrnx*y + nBppixel*x;
+	uint8_t * pvram = (binfo->vram + nBppixel*binfo->scrnx*y + nBppixel*x);
 	*pvram = c.r;
 	*(pvram+1) = c.g;
 	*(pvram+2) = c.b;
@@ -58,22 +59,10 @@ void graphic_init()
 
 	draw_asc16('>', (point_t){22, 2}, MediumBlue);
 	draw_str16("Chill out!", (point_t){30, 2}, (rgb_t){32,33,22});
-}
 
-void init_screen8()
-{
-	_gfillrect2((rgb_t){20,40,100}, (rect_t){0,0,binfo->scrnx,binfo->scrny}); 
-
-	_gdrawrect((rgb_t){100,100,100}, (rect_t){0, 0, 64, 700});
-
-	for(int i=0; i<10; i++)
-	{
-		_gfillrect2((rgb_t){200,220,10}, (rect_t){2, 2+70*i, 60, 60});
-		_gdrawrect((rgb_t){32,33,44}, (rect_t){2, 2+70*i, 60, 60});
-	}
-
-	_gdrawline((rgb_t){211,22,32}, (point_t){100, 70}, (point_t){800, 70}); 
-	draw_str16("Rolling in the deep", (point_t){120,20}, Black);
+    rgb_t buff[16*16];
+    init_mouse_cursor8(buff);
+    draw_mouse(buff);
 
 	char buf[100];
 	memset(buf,'\0',100);
@@ -90,6 +79,25 @@ void init_screen8()
 	
 	draw_editbox(eb);
  	getcontent(&eb);
+	
+}
+
+void init_screen8()
+{
+	cprintf("scrnx:%d binfo:%x", binfo->scrnx, binfo);
+	_gfillrect2((rgb_t){20,40,100}, (rect_t){0,0,binfo->scrnx,binfo->scrny}); 
+	cprintf("wtf");
+	_gdrawrect((rgb_t){100,100,100}, (rect_t){0, 0, 64, 700});
+
+	for(int i=0; i<10; i++)
+	{
+		_gfillrect2((rgb_t){200,220,10}, (rect_t){2, 2+70*i, 60, 60});
+		_gdrawrect((rgb_t){32,33,44}, (rect_t){2, 2+70*i, 60, 60});
+	}
+
+	_gdrawline((rgb_t){211,22,32}, (point_t){100, 70}, (point_t){800, 70}); 
+	draw_str16("Rolling in the deep", (point_t){120,20}, Black);
+
 	
 
 	return;

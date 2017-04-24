@@ -1,12 +1,14 @@
 #ifndef __KERN_MM_MMU_H__
 #define __KERN_MM_MMU_H__ 
 
-#include <types.h>
 
 #define STS_CG32        0xC         // 32-bit Call Gate
 #define STS_IG32        0xE         // 32-bit Interrupt Gate
 #define STS_TG32        0xF         // 32-bit Trap Gate
 
+#ifndef __ASSEMBLER__
+
+#include <types.h>
 
 /* Gate descriptors for interrupts and traps */
 struct gatedesc {
@@ -33,5 +35,8 @@ struct gatedesc {
         (gate).gd_off_31_16 = (uint32_t)(off) >> 16;        \
     }
 
+#endif /* !__ASSEMBLER__ */
 
-#endif
+#define PGSIZE      4096
+
+#endif /* !__KERN_MMU_H__ */

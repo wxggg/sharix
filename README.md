@@ -1,2 +1,1 @@
-# Sharix
-# good 
+# Sharix 

@@ -24,8 +24,6 @@ delay(void) {
 #define LPTPORT         0x378
   
 
-
-
 /* lpt_putc - copy console output to parallel port */
 static void
 lpt_putc(int c) {
@@ -37,7 +35,6 @@ lpt_putc(int c) {
     outb(LPTPORT + 2, 0x08 | 0x04 | 0x01);
     outb(LPTPORT + 2, 0x08);
 }
-
 
 
 /* *

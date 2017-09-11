@@ -1,6 +1,7 @@
 #include <types.h>
 #include <x86.h>
 #include <picirq.h>
+#include <stdio.h>
 
 #define IO_PIC1		0x20 //Master
 #define IO_PIC2 	0xA0 //Slave

@@ -5,7 +5,7 @@
 #include <x86.h>
 #include <stdio.h>
 #include <string.h>
-
+#include <kdebug.h>
 
 static struct taskstate ts = {0};
 
@@ -64,7 +64,7 @@ static void page_init(void)
 	{
 		begin = memmap->map[i].addr;
 		free_end = begin + memmap->map[i].size;
-		cprintf("map[%d]: begin:%08llx free_end:%08llx size:%08llx type:%d\n", 
+		cprintf("map[%d]: begin:%08llx free_end:%08llx size:%08llx type:%d\n",
 			i, begin, free_end-1, memmap->map[i].size, memmap->map[i].type);
 		if(memmap->map[i].type == E820_ARM) {
 			if(maxpa < free_end && begin < KMEMSIZE)
@@ -86,11 +86,11 @@ static void page_init(void)
 	for (int i=0; i<memmap->nr_map; ++i) {
 		begin = memmap->map[i].addr;
 		free_end = begin + memmap->map[i].size;
-		if(memmap->map[i].type == E820_ARM) 
+		if(memmap->map[i].type == E820_ARM)
 		{
 			if(begin < freemem) begin = freemem;
 			if(free_end > KMEMSIZE) free_end = KMEMSIZE;
-			if(begin < free_end) 
+			if(begin < free_end)
 			{
 				begin = ROUND_UP(begin, PGSIZE);
 				free_end = ROUND_DOWN(free_end, PGSIZE);
@@ -164,7 +164,7 @@ static void boot_map_segment(uintptr_t *pgdir, uintptr_t la, size_t size, uintpt
 		*pte_p = pa | PTE_P | perm;
 	}
 }
-static void enable_paging(void) 
+static void enable_paging(void)
 {
 	lcr3(boot_cr3);
 	// turn on paging
@@ -174,7 +174,7 @@ static void enable_paging(void)
     lcr0(cr0);
 //    cprintf("cr0:%x =============\n", cr0);
 }
-void pmm_init(void) 
+void pmm_init(void)
 {
 	init_pmm_manager();
 	page_init();
@@ -194,14 +194,14 @@ void pmm_init(void)
 
 	// recursively insert boot_pgdir in itself
 	// to form a virtual page table at virtual address VPT
-	boot_pgdir[PDX(VPT)] = PADDR(boot_pgdir) | PTE_P | PTE_W;	
+	boot_pgdir[PDX(VPT)] = PADDR(boot_pgdir) | PTE_P | PTE_W;
 
 	boot_map_segment(boot_pgdir, KERNBASE, KMEMSIZE, 0, PTE_W);
 
 	//temporary map:
-    //virtual_addr 3G~3G+4M = linear_addr 0~4M = linear_addr 3G~3G+4M = phy_addr 0~4M     
+    //virtual_addr 3G~3G+4M = linear_addr 0~4M = linear_addr 3G~3G+4M = phy_addr 0~4M
 	boot_pgdir[0] = boot_pgdir[PDX(KERNBASE)];
-	
+
 	enable_paging();
 	gdt_init();
 
@@ -268,7 +268,7 @@ static inline void page_remove_pte(uintptr_t *pgdir, uintptr_t la, uintptr_t * p
 static inline void page_remove(uintptr_t *pgdir, uintptr_t la)
 {
 	uintptr_t *pte_p = get_pte(pgdir, la);
-	if(pte_p != NULL) 
+	if(pte_p != NULL)
 		page_remove_pte(pgdir, la, pte_p);
 }
 int page_insert(uintptr_t *pgdir, struct Page *page, uintptr_t la, uint32_t perm)
@@ -282,7 +282,7 @@ int page_insert(uintptr_t *pgdir, struct Page *page, uintptr_t la, uint32_t perm
 	tlb_invalidate(pgdir, la);
 	return 0;
 }
-void tlb_invalidate(uintptr_t *pgdir, uintptr_t la) 
+void tlb_invalidate(uintptr_t *pgdir, uintptr_t la)
 {
 	if(rcr3() == PADDR(pgdir)) {
 		invlpg((void*)la);
@@ -379,7 +379,7 @@ perm2str(int perm) {
 //  table:       the beginning addr of table
 //  left_store:  the pointer of the high side of table's next range
 //  right_store: the pointer of the low side of table's next range
-// return value: 0 - not a invalid item range, perm - a valid item range with perm permission 
+// return value: 0 - not a invalid item range, perm - a valid item range with perm permission
 static int
 get_pgtable_items(size_t left, size_t right, size_t start, uintptr_t *table, size_t *left_store, size_t *right_store) {
     if (start >= right) {

@@ -13,8 +13,7 @@
 #include <kdebug.h>
 
 int kern_init(void) __attribute__((noreturn));
-
-
+ 
 int
 kern_init(void) {
     extern char edata[], end[];
@@ -32,11 +31,11 @@ kern_init(void) {
 
     pic_init();
     cprintf("wtfwtf-------------------------\n");
-    
+
     idt_init();
     clock_init();
 
-    intr_enable(); 
+    intr_enable();
 
     graphic_init();
 

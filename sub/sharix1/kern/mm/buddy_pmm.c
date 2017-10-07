@@ -9,16 +9,12 @@ static free_area_t free_area[MAX_ORDER+1];
 
 static void buddy_init(void)
 {
-	while(1) {
-	    cprintf("buddy-");
-	}
 	for (int i = 0; i < MAX_ORDER; ++i)
 	{
 		cprintf("bi-");
-//		list_init(&free_list(i));
-//		nr_free(i) = 0;
+		list_init(&free_list(i));
+		nr_free(i) = 0;
 	}
-	while(1){}
 }
 
 static void buddy_init_memmap(struct Page *base, size_t n)
@@ -44,7 +40,7 @@ static void buddy_init_memmap(struct Page *base, size_t n)
 
 			cprintf("list order=%d ++\n", order);
 		}
-		--order; 
+		--order;
 		order_size >>= 1;
 	}
 }
@@ -81,6 +77,6 @@ const struct pmm_manager buddy_pmm_manager = {
 	.init = buddy_init,
 	.init_memmap = buddy_init_memmap,
 	.alloc_pages = buddy_alloc_pages,
-	.free_pages = buddy_free_pages,	
+	.free_pages = buddy_free_pages,
 	.check = buddy_check,
 };

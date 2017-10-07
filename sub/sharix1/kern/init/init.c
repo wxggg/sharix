@@ -24,17 +24,17 @@ kern_init(void) {
     const char *message = "Sharix is loading ...";
     cprintf("%s\n\n", message);
 
-    print_kerninfo();
+    // print_kerninfo();
 
-    pmm_init();
+    // pmm_init();
 
 
 
     pic_init();
     idt_init();
- //   clock_init();
+  //  clock_init();
 
-    intr_enable(); 
+    // intr_enable();
 
     graphic_init();
 

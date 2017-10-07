@@ -7,8 +7,8 @@ ENTRY(kern_entry)
 
 SECTIONS {
     /* Load the kernel at this address: "." means the current address */
-    
-    . = 0xC0100000;
+
+    . = 0xc0100000;
 
     .text : {
         *(.text .stub .text.* .gnu.linkonce.t.*)

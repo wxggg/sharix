@@ -1,5 +1,5 @@
 #ifndef _KERNINFO_H
-#define _KERNINFO_H 
+#define _KERNINFO_H
 
 #include <types.h>
 

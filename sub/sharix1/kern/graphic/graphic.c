@@ -9,9 +9,9 @@
 
 const struct BOOTINFO *binfo = (struct BOOTINFO *) (ADR_BOOTINFO);
 
-struct BOOTINFO* get_bootinfo() {
-	return binfo;
-}
+// struct BOOTINFO* get_bootinfo() {
+// 	return binfo;
+// }
 
 static BOOL is_pixel_valid(int32_t x, int32_t y)
 {
@@ -52,8 +52,9 @@ rect_t _gGetScrnRect()
 }
 
 
-void graphic_init() 
+void graphic_init()
 {
+	binfo->vram += KERNBASE;
 	cprintf("graphic_init\n");
 	init_screen8();
 
@@ -76,16 +77,16 @@ void graphic_init()
 	eb.ch = buf;
 	eb.ch_size = 100;
 	eb.cur_x = eb.cur_y = 0;
-	
+
 	draw_editbox(eb);
  	getcontent(&eb);
-	
+
 }
 
 void init_screen8()
 {
 	cprintf("scrnx:%d binfo:%x", binfo->scrnx, binfo);
-	_gfillrect2((rgb_t){20,40,100}, (rect_t){0,0,binfo->scrnx,binfo->scrny}); 
+	_gfillrect2((rgb_t){20,40,100}, (rect_t){0,0,binfo->scrnx,binfo->scrny});
 	cprintf("wtf");
 	_gdrawrect((rgb_t){100,100,100}, (rect_t){0, 0, 64, 700});
 
@@ -95,10 +96,10 @@ void init_screen8()
 		_gdrawrect((rgb_t){32,33,44}, (rect_t){2, 2+70*i, 60, 60});
 	}
 
-	_gdrawline((rgb_t){211,22,32}, (point_t){100, 70}, (point_t){800, 70}); 
+	_gdrawline((rgb_t){211,22,32}, (point_t){100, 70}, (point_t){800, 70});
 	draw_str16("Rolling in the deep", (point_t){120,20}, Black);
 
-	
+
 
 	return;
 }
@@ -107,7 +108,7 @@ void draw_editbox(editbox_t eb) {
 	_gfillrect2(eb.bg_c, (rect_t){eb.point.x, eb.point.y, eb.ch_x*ASC16_WIDTH, eb.ch_y*ASC16_HEIGHT});
 }
 
-void draw_mouse(rgb_t *mouse) 
+void draw_mouse(rgb_t *mouse)
 {
 	rect_t rect = {30,40,16,16};
 	_gfillrect(mouse, rect);
@@ -142,16 +143,16 @@ void _gdrawrect(rgb_t c, rect_t	rect)
 }
 
 void _gfillrect(rgb_t *buf, rect_t rect)
-{	
+{
 	for(int x=rect.left; x<rect.left+rect.width; x++)
-		for(int y=rect.top; y<rect.top+rect.height; y++) 
+		for(int y=rect.top; y<rect.top+rect.height; y++)
 			setpixel(x, y, buf[(x-rect.left) + rect.width*(y-rect.top)]);
 }
 
 void _gfillrect2(rgb_t c, rect_t rect)
 {
 	for(int x=rect.left; x<rect.left+rect.width; x++)
-		for(int y=rect.top; y<rect.top+rect.height; y++) 
+		for(int y=rect.top; y<rect.top+rect.height; y++)
 			setpixel(x, y, c);
 }
 

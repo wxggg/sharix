@@ -5,3 +5,4 @@ void io_out8(int port, int data);
 
 void io_cli(void);
 void io_sti(void);
+int set_pixel(void);

@@ -164,7 +164,7 @@ static void boot_map_segment(uintptr_t *pgdir, uintptr_t la, size_t size, uintpt
 		*pte_p = pa | PTE_P | perm;
 	}
 }
-static void enable_paging(void)
+void enable_paging(void)
 {
 	lcr3(boot_cr3);
 	// turn on paging
@@ -174,6 +174,7 @@ static void enable_paging(void)
     lcr0(cr0);
 //    cprintf("cr0:%x =============\n", cr0);
 }
+
 void pmm_init(void)
 {
 	init_pmm_manager();
@@ -335,17 +336,18 @@ void check_boot_pgdir()
 
 	struct Page *p;
 	p = alloc_page();
-	page_insert(boot_pgdir, p, 0x100, PTE_W);
 	page_insert(boot_pgdir, p, 0x100+PGSIZE, PTE_W);
+	page_insert(boot_pgdir, p, 0x100, PTE_W);
+	page_insert(boot_pgdir, p, 0x100+18, PTE_W);
 
-	const char *str = "sharix: hellow world!";
+	const char *str = "hello world!";
 	char *c = (char*)0x100;
 //	char ch = *c; // test for read
 	*c = 'c'; //test for write
 	strcpy((void*)0x100, str);
-	int ret = strcmp((void*)0x100, (void*)(0x100+PGSIZE));
-	cprintf("ret:%x", ret);
-
+	int ret = strcmp((void*)0x100, (void*)(0x100));
+	cprintf("ret:%d str:%s str2:%s\n", ret, str, (char*)(0x100+3));
+	cprintf("pa of p: %x\n", page2pa(p));
 //	*(char*)(page2va(p) + 0x100) = '\0';
 	ret = strlen((const char*)0x100);
 	cprintf("ret:%x", ret);

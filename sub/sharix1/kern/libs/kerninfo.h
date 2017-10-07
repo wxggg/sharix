@@ -1,5 +1,5 @@
 #ifndef _KERNINFO_H
-#define _KERNINFO_H 
+#define _KERNINFO_H
 
 #include <types.h>
 
@@ -19,7 +19,7 @@ struct BOOTINFO
 };
 
 
-#define ADR_BOOTINFO 0x00000000
+#define ADR_BOOTINFO 0xC0000000 
 #define BOOTINFO_SIZE (sizeof(BOOTINFO))
 
 struct CMD

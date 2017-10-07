@@ -19,7 +19,7 @@ static struct pseudodesc idt_pd = {
 };
 
 /* idt_init - initialize IDT to each of the entry points in kern/trap/vectors.S */
-void idt_init(void) { 
+void idt_init(void) {
 	extern uintptr_t __vectors[];
 	for(int i=0; i<sizeof(idt)/sizeof(struct gatedesc);i++)
 		SETGATE(idt[i], 0, GD_KTEXT, __vectors[i], DPL_KERNEL);
@@ -32,6 +32,9 @@ void idt_init(void) {
 static void trap_dispatch(struct trapframe *tf) {
 	char c;
 	switch(tf->tf_trapno) {
+		// case T_PGFLT:
+		// 	cprintf("pgfault\n");
+		// 	break;
 		case IRQ_OFFSET + IRQ_TIMER:
 			ticks ++;
 			if (ticks % TICK_NUM == 0) {
@@ -44,7 +47,7 @@ static void trap_dispatch(struct trapframe *tf) {
 			keybuf_push(&kb, c);
 			break;
 		default:;
-//			cprintf("UNKNOW INT\n");
+			cprintf("UNKNOW INT\n");
 	}
 }
 

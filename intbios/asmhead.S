@@ -19,7 +19,7 @@ asmstart:
 set_video_mode:
 check_vbe:
 	mov $0x4f00, %ax #VBE
-	int $0x10 
+	int $0x10
 	cmp $0x004f, %ax #if VBE exist, ax==0x004f
 	jne set_mode_vga13
 	movw 0x04(%di), %ax
@@ -27,14 +27,14 @@ check_vbe:
 	jb set_mode_vga13
 check_vbe_mode:
 	movw $0x118, %cx
-	mov $0x4f01, %ax 
-	int $0x10 
+	mov $0x4f01, %ax
+	int $0x10
 	cmp $0x004f, %ax
 	jne set_mode_vga13
 	movw (%di), %ax
 	andw $0x0080, %ax
 	jz set_mode_vga13
-save_video_mode_info:
+save_video_mode_info: // save binfo to physical 0x0
     movw $0x118, 0x2 #vmode
     movw 0x12(%di), %ax
     movw %ax, 0x4  #scrnx
@@ -42,15 +42,15 @@ save_video_mode_info:
     movw %ax, 0x6  #scrny
     movb 0x19(%di), %al
     movb %al, 0x8  #bitspixel
-    movb 0x1b(%di), %al 
+    movb 0x1b(%di), %al
     movb %al, 0x9 #mem_model
     movl 0x28(%di), %eax
-    movl %eax, 0xc  #vram 
+    movl %eax, 0xc  #vram
 set_mode_vbe:
 	movw $0x118, %bx
 	addw $0x4000, %bx
 	mov $0x4f02, %ax
-	int $0x10 
+	int $0x10
 	ret
 #-------FUNCTION set video320x200
 set_mode_vga13:
@@ -60,8 +60,8 @@ set_mode_vga13:
 
 
 main:
-	call set_video_mode 
- #   jmp main
+	call set_video_mode
+
 	# Enable A20:
     #  For backwards compatibility with the earliest PCs, physical
     #  address line 20 is tied low, so that addresses higher than
@@ -87,16 +87,16 @@ probe_memory:
     movw $0x8004, %di
 start_probe:
     movl $0xE820, %eax
-    movl $20, %ecx 
+    movl $20, %ecx
     movl $SMAP, %edx
     int $0x15
-    jnc cont 
+    jnc cont
     movw $12345, 0x8000
     jmp finish_probe
 cont:
-    addw $20, %di 
+    addw $20, %di
     incl 0x8000
-    cmpl $0, %ebx 
+    cmpl $0, %ebx
     jnz start_probe
 finish_probe:
 
@@ -128,9 +128,9 @@ protcseg:
     # Set up the stack pointer and call into C. The stack region is from 0--start(0x7c00)
     movl $0x0, %ebp
     movl $0x7c00, %esp
-    
+
     call bootmain
- 
+
 
 .data
 # Bootstrap GDT

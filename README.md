@@ -1,7 +1,7 @@
 ## Sharix has the meaning of sharing, which means it is for everyone to learn and improve.
 ***
 ## Introduction
-I have studied [30 days to make an os] and the ucore course of Tsinghua University, so here comes a thought to my mind.
+I have studied 《30 days to make an os》 and the ucore course of Tsinghua University, so here comes a thought to my mind.
 I was wondering how to make a graphical os at the base of ucore using the thought of [30 days to make an os]
 * Sharix:  https://github.com/sharixos/sharix.git
 ***

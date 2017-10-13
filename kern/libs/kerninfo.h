@@ -2,6 +2,7 @@
 #define _KERNINFO_H
 
 #include <types.h>
+#include <pmm.h>
 
 #define FONT_ASC16_ADDR 0x11000
 #define FONT_ASC16_SIZE (4096)
@@ -19,8 +20,9 @@ struct BOOTINFO
 };
 
 
-#define ADR_BOOTINFO (0x00000000 + KERNBASE)
+#define ADR_BOOTINFO 0x00000000
 #define BOOTINFO_SIZE (sizeof(BOOTINFO))
+extern struct BOOTINFO* binfo;
 
 struct CMD
 {
@@ -30,5 +32,6 @@ struct CMD
 
 
 };
+
 
 #endif

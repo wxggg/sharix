@@ -1,7 +1,11 @@
-#ifndef __KERN_TRAP_TRAP_H__
-#define __KERN_TRAP_TRAP_H__
+#pragma once
 
 #include <types.h>
+
+/* Trap Numbers */
+
+/* Processor-defined: */
+#define T_PGFLT 								14
 
 #define IRQ_TIMER               0
 #define IRQ_KBD                 1
@@ -18,10 +22,10 @@ struct pushregs
 	uint32_t reg_ebx;
 	uint32_t reg_edx;
 	uint32_t reg_ecx;
-	uint32_t reg_eax;	
+	uint32_t reg_eax;
 };
 
-struct trapframe 
+struct trapframe
 {
 	struct pushregs tf_regs;
 	uint16_t tf_es;
@@ -42,6 +46,3 @@ struct trapframe
 } __attribute__((packed));
 
 void idt_init(void);
-
-#endif /* !__KERN_TRAP_TRAP_H__ */
-

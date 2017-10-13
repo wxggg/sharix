@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <kdebug.h>
+#include <kerninfo.h>
 
 static struct taskstate ts = {0};
 
@@ -82,7 +83,6 @@ static void page_init(void)
 //		SetPageReserved(pages+i);
 
 	uintptr_t freemem = PADDR((uintptr_t)pages + sizeof(struct Page)*npage);
-	cprintf("freemem:%x", freemem);
 	for (int i=0; i<memmap->nr_map; ++i) {
 		begin = memmap->map[i].addr;
 		free_end = begin + memmap->map[i].size;
@@ -101,10 +101,6 @@ static void page_init(void)
 			}
 		}
 	}
-	cprintf("free_end:%x \n", free_end);
-
-	cprintf("maxpa:%x \n", maxpa);
-	cprintf("npage:%d  pages:%x", npage, pages);
 }
 
 static void check_alloc_page()
@@ -151,7 +147,7 @@ gdt_init(void) {
     ltr(GD_TSS);
 }
 
-static void boot_map_segment(uintptr_t *pgdir, uintptr_t la, size_t size, uintptr_t pa, uint32_t perm)
+static void map_physical_memory(uintptr_t *pgdir, uintptr_t la, size_t size, uintptr_t pa, uint32_t perm)
 {
 	size_t n = ROUND_UP(size + PG_OFF(la), PGSIZE) /PGSIZE;
 	la = ROUND_DOWN(la, PGSIZE);
@@ -159,11 +155,11 @@ static void boot_map_segment(uintptr_t *pgdir, uintptr_t la, size_t size, uintpt
 	for(; n>0; n--,la+=PGSIZE,pa+=PGSIZE)
 	{
 		uintptr_t *pte_p = get_pte(pgdir, la);
-//        cprintf("ptep:%x *ptep:%x n:%x pa:%x la:%x\n", pte_p, *pte_p, pa, la);
-
+    // cprintf("ptep:%x *ptep:%x n:%x pa:%x la:%x\n", pte_p, *pte_p, pa, la);
 		*pte_p = pa | PTE_P | perm;
 	}
 }
+
 void enable_paging(void)
 {
 	lcr3(boot_cr3);
@@ -179,7 +175,6 @@ void pmm_init(void)
 {
 	init_pmm_manager();
 	page_init();
-
 	check_alloc_page();
 
 	struct Page *p = alloc_page();
@@ -187,20 +182,16 @@ void pmm_init(void)
 	memset(boot_pgdir, 0, PGSIZE);
 	boot_cr3 = PADDR(boot_pgdir);
 
-	cprintf("boot_pgdir:%x  cr3:%x \n", boot_pgdir, boot_cr3);
-
 	check_pgdir();
-
-	cprintf("boot_pgdir 0:%x 1:%x 2:%x\n", boot_pgdir[0], boot_pgdir[1], boot_pgdir[2]);
 
 	// recursively insert boot_pgdir in itself
 	// to form a virtual page table at virtual address VPT
 	boot_pgdir[PDX(VPT)] = PADDR(boot_pgdir) | PTE_P | PTE_W;
 
-	boot_map_segment(boot_pgdir, KERNBASE, KMEMSIZE, 0, PTE_W);
-
+	//boot_map_segment: map KERNBASE~KERNBASE+KMEMSIZE to 0~KMEMSIZE
+	map_physical_memory(boot_pgdir, KERNBASE, KMEMSIZE, 0, PTE_W);
 	//temporary map:
-    //virtual_addr 3G~3G+4M = linear_addr 0~4M = linear_addr 3G~3G+4M = phy_addr 0~4M
+  //virtual_addr 3G~3G+4M = linear_addr 0~4M = linear_addr 3G~3G+4M = phy_addr 0~4M
 	boot_pgdir[0] = boot_pgdir[PDX(KERNBASE)];
 
 	enable_paging();
@@ -210,13 +201,12 @@ void pmm_init(void)
 
 	check_boot_pgdir();
 
-//	for(int i=0;i<1024;i++) {
-//		cprintf("pgdir[%d]:%x\n", i, boot_pgdir[i]);
-//	}
+	//map vram memory to vram memory
+	int nBppixel = binfo->bitspixel>>3;
+	map_physical_memory(boot_pgdir, (uint32_t)binfo->vram, binfo->scrnx*binfo->scrny*nBppixel, (uint32_t)binfo->vram, PTE_W);
 
 	print_pgdir();
 	print_stackframe();
-
 }
 
 struct Page *alloc_pages(size_t n)
@@ -242,7 +232,7 @@ uintptr_t * get_pte(uintptr_t *pgdir, uintptr_t la)
 {
 	uintptr_t *pde_p = &pgdir[PDX(la)];
 	if(!(*pde_p & PTE_P)) {
-		cprintf("alloc-");
+		// cprintf("la:%x get_pte alloc for pde_p\n", la);
 		struct Page *page = alloc_page();
 		uintptr_t pa = page2pa(page);
 		memset((void*)VADDR(pa), 0, PGSIZE);
@@ -299,7 +289,6 @@ static void check_pgdir(void)
 
 	uintptr_t *pte_p = get_pte(boot_pgdir, 0x0);
 	cprintf("*pte_p:%x pa2page(*pte_p):%x p1:%x  \n", *pte_p, pa2page(*pte_p), p1);
-	cprintf("wtf\n");
 	cprintf("pte_p:%x  newpte_p:%x\n", pte_p, get_pte(boot_pgdir, 0));
 
 	struct Page *p2 = alloc_page();
@@ -331,7 +320,6 @@ void check_boot_pgdir()
 			cprintf("   *pte_p:%x \n", *pte_p);
 	}
 
-	cprintf("%x  %x\n", PDE_ADDR(boot_pgdir[PDX(VPT)]), PADDR(boot_pgdir));
 	cprintf("%x\n", boot_pgdir[0]);
 
 	struct Page *p;
@@ -359,6 +347,11 @@ void check_boot_pgdir()
 	cprintf("check_boot_pgdir() succeeded!\n");
 }
 
+void insert_someaddress()
+{
+	// page_insert(boot_pgdir,)
+
+}
 
 //perm2str - use string 'u,r,w,-' to present the permission
 static const char *

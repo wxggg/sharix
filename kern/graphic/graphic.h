@@ -1,5 +1,5 @@
 #ifndef _KERN_GRAPHIC_H
-#define _KERN_GRAPHIC_H 
+#define _KERN_GRAPHIC_H
 
 
 #include <types.h>

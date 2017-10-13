@@ -32,9 +32,9 @@ void idt_init(void) {
 static void trap_dispatch(struct trapframe *tf) {
 	char c;
 	switch(tf->tf_trapno) {
-		// case T_PGFLT:
-		// 	cprintf("pgfault\n");
-		// 	break;
+		case T_PGFLT:
+			// cprintf("pgfault\n");
+			break;
 		case IRQ_OFFSET + IRQ_TIMER:
 			ticks ++;
 			if (ticks % TICK_NUM == 0) {
@@ -52,6 +52,6 @@ static void trap_dispatch(struct trapframe *tf) {
 }
 
 void trap(struct trapframe *tf) {
-//	cprintf("trap");
+	// cprintf("trap");
 	trap_dispatch(tf);
 }

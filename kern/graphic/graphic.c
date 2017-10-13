@@ -8,14 +8,14 @@
 #include <memlayout.h>
 #include <stdio.h>
 #include <string.h>
+#include <kerninfo.h>
 
-struct BOOTINFO *binfo = (struct BOOTINFO *)(ADR_BOOTINFO);
-
-void draw_editbox(editbox_t eb);
-
-struct BOOTINFO* get_bootinfo() {
+struct BOOTINFO * get_bootinfo()
+{
 	return binfo;
 }
+
+void draw_editbox(editbox_t eb);
 
 inline BOOL is_pixel_valid(int32_t x, int32_t y)
 {
@@ -32,11 +32,6 @@ inline BOOL setpixel(int32_t x, int32_t y, rgb_t c)
 
 	int nBppixel = binfo->bitspixel>>3;
 	uint8_t * pvram = (uint8_t*)(binfo->vram + nBppixel*binfo->scrnx*y + nBppixel*x);
-	// cprintf("setpixel: pvram:%x\n", *pvram);
-	// *pvram = c;
-
-	// cprintf("wtf:%x ---------------------------\n", *pvram);
-
 	*pvram = c.r;
 	*(pvram+1) = c.g;
 	*(pvram+2) = c.b;
@@ -65,7 +60,6 @@ rect_t _gGetScrnRect()
 
 void graphic_init()
 {
-	binfo->vram += KERNBASE;
 	cprintf("graphic_init\n");
 	init_screen8();
 
@@ -96,11 +90,8 @@ void graphic_init()
 
 void init_screen8()
 {
-	cprintf("wtf binfo:%x\n", binfo);
-	cprintf("scrnx:%d binfo:%x", binfo->scrnx, binfo);
-	setpixel(20,30,(rgb_t){0,0xff,0});
 	_gfillrect2((rgb_t){20,40,100}, (rect_t){0,0,binfo->scrnx,binfo->scrny});
-	cprintf("wtf");
+
 	_gdrawrect((rgb_t){100,100,100}, (rect_t){0, 0, 64, 700});
 
 	for(int i=0; i<10; i++)

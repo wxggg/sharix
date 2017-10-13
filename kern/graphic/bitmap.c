@@ -1,10 +1,10 @@
 #include <bitmap.h>
 #include <types.h>
 #include <graphic.h>
-#include <kerninfo.h> 
+#include <kerninfo.h>
 #include <math.h>
 
-static bitmap_t* p_bmp_icon = (bitmap_t*)(BMP_ICON_ADDR);
+static bitmap_t* p_bmp_icon = (bitmap_t*)(BMP_ICON_ADDR+KERNBASE);
 
 BOOL draw_bitmap(bitmap_t* p_bmp, int x0, int y0)
 {
@@ -18,7 +18,7 @@ BOOL draw_bitmap(bitmap_t* p_bmp, int x0, int y0)
 	/* 图像的宽、髙 */
 	int bmp_cx = abs(p_bmp->info_head.bi_width);
 	int bmp_cy = abs(p_bmp->info_head.bi_height);
- 
+
 	int nBpline = (((bmp_cx*p_bmp->info_head.bi_bit_count + 31) >> 5) << 2);
 
 	for(int j=0; j<bmp_cy; j++) {

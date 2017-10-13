@@ -13,13 +13,15 @@
 #include <kdebug.h>
 #include <asm_tool.h>
 
+struct BOOTINFO *binfo = (struct BOOTINFO *) (ADR_BOOTINFO+KERNBASE);
+
 int kern_init(void) __attribute__((noreturn));
 
 int
 kern_init(void) {
     extern char edata[], end[];
     memset(edata, 0, end - edata);
-    struct BOOTINFO *binfo = (struct BOOTINFO *) ADR_BOOTINFO;
+
     cons_init();
 
     const char *message = "Sharix is loading ...";

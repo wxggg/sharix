@@ -97,9 +97,9 @@ monitor(struct trapframe *tf) {
                 if (runcmd(buf, tf) < 0) {
                     break;
                 }
-            } 
+            }
         }
-        
+
     }
 }
 
@@ -112,7 +112,7 @@ mon_help(int argc, char **argv, struct trapframe *tf) {
         draw_str16((char*)commands[i].name, (point_t){20, 40+i*16}, (rgb_t){43,43,43});
     }
     cputchar('*');
-    _gfillrect2(MediumBlue, (rect_t){200,200,500,500});
+    // _gfillrect2(MediumBlue, (rect_t){200,200,500,500});
     return 0;
 }
 
@@ -132,12 +132,11 @@ mon_kerninfo(int argc, char **argv, struct trapframe *tf) {
  * */
 int
 mon_bootinfo(int argc, char **argv, struct trapframe *tf) {
-    struct BOOTINFO* pboot = get_bootinfo();
-    cprintf("uint8_t: cyls=%d leds=%x  ", pboot->cyls, pboot->leds); 
-    cprintf("vmode=%x reserve=%x\n", pboot->vmode, pboot->reserve);
-    cprintf("uint16_t: scrnx=%d scrny=%d\n", pboot->scrnx, pboot->scrny);
-    cprintf("uint8_t: bitspixel=%d mem_model=%d\n", pboot->bitspixel, pboot->mem_model);
-    cprintf("uint8_t: vram=%x\n", pboot->vram);    
+    cprintf("uint8_t: cyls=%d leds=%x  ", binfo->cyls, binfo->leds);
+    cprintf("vmode=%x reserve=%x\n", binfo->vmode, binfo->reserve);
+    cprintf("uint16_t: scrnx=%d scrny=%d\n", binfo->scrnx, binfo->scrny);
+    cprintf("uint8_t: bitspixel=%d mem_model=%d\n", binfo->bitspixel, binfo->mem_model);
+    cprintf("uint8_t: vram=%x\n", binfo->vram);
     return 0;
 }
 
@@ -151,4 +150,3 @@ mon_backtrace(int argc, char **argv, struct trapframe *tf) {
     print_stackframe();
     return 0;
 }
-

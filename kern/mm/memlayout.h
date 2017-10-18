@@ -81,14 +81,14 @@
 #include <list.h>
 #include <atomic.h>
 
-#define E820MAX 	20 
+#define E820MAX 	20
 #define E820_ARM 	1	// memory
 #define E820_ARR 	2 	// reserved
 
 struct e820map
 {
 	int nr_map;
-	struct 
+	struct
 	{
 		uint64_t addr;
 		uint64_t size;
@@ -105,19 +105,24 @@ struct Page
 
 #define PG_reserved 	0
 #define PG_property		1 // if =1 means is valid
+#define PG_slab                     2       // page frame is included in a slab
 
 #define SetPageReserved(page) 	set_bit(PG_reserved, &((page)->flags))
 #define ClearPageReserved(page) clear_bit(PG_reserved, &((page)->flags))
 #define PageReserved(page) 		test_bit(PG_reserved, &((page)->flags))
 
+#define SetPageSlab(page)           set_bit(PG_slab, &((page)->flags))
+#define ClearPageSlab(page)         clear_bit(PG_slab, &((page)->flags))
+#define PageSlab(page)              test_bit(PG_slab, &((page)->flags))
+
 #define SetPageProperty(page) 	set_bit(PG_reserved, &((page)->flags))
 #define ClearPageProperty(page) clear_bit(PG_property, &((page)->flags))
 #define PageProperty(page) 		test_bit(PG_property, &((page)->flags))
 
-typedef struct 
+typedef struct
 {
 	list_entry_t free_list;
-	unsigned int nr_free;	// # of free pages 
+	unsigned int nr_free;	// # of free pages
 } free_area_t;
 
 #endif

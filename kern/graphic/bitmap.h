@@ -1,5 +1,4 @@
-#ifndef _KERN_BITMAP_H_
-#define _KERN_BITMAP_H_ 
+#pragma once
 
 #include <types.h>
 
@@ -34,5 +33,3 @@ typedef struct bitmap24_t
 } bitmap_t;
 
 void draw_bmp_test();
-
-#endif

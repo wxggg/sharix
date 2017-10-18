@@ -35,7 +35,7 @@ static void buddy_init_memmap(struct Page *base, size_t n)
 
 			cprintf("list order=%d ++\n", order);
 		}
-		--order; 
+		--order;
 		order_size >>= 1;
 	}
 }
@@ -46,7 +46,7 @@ static inline struct Page* buddy_alloc_pages_sub(size_t order)
 	for(size_t i=order; i<=MAX_ORDER; i++) {
 		if(!list_empty(&free_list(i))) {
 			list_entry_t *le = list_next(&free_list(i));
-			struct Page *page = tostruct(le, struct Page, page_link);
+			struct Page *page = to_struct(le, struct Page, page_link);
 			nr_free(i) --;
 			list_del(le);
 			size_t size = 1 << i;
@@ -86,7 +86,7 @@ static void buddy_free_pages_sub(struct Page *base, size_t order)
 				flag = 1;
 				break;
 			}
-			struct Page * buddy = tostruct(le, struct Page, page_link);
+			struct Page * buddy = to_struct(le, struct Page, page_link);
 			le = list_next(le);
 			size_t p_size = 1<<p->order, buddy_size = 1<<buddy->order;
 			if(p == buddy+buddy_size) {
@@ -172,7 +172,7 @@ const struct pmm_manager buddy_pmm_manager = {
 	.init = buddy_init,
 	.init_memmap = buddy_init_memmap,
 	.alloc_pages = buddy_alloc_pages,
-	.free_pages = buddy_free_pages,	
+	.free_pages = buddy_free_pages,
 	.check = buddy_check,
 	.pageinfo = buddy_pageinfo,
 };

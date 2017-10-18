@@ -7,6 +7,7 @@
 #include <string.h>
 #include <kdebug.h>
 #include <kerninfo.h>
+#include <slab.h>
 
 static struct taskstate ts = {0};
 
@@ -77,7 +78,7 @@ static void page_init(void)
 	extern char end[];
 	cprintf("end:%x", end);
 	npage = maxpa / PGSIZE;
-	pages = (struct Page *)ROUND_UP((void*)end, PGSIZE);
+	pages = (struct Page *)ROUNDUP((void*)end, PGSIZE);
 
 //	for(int i=0; i<npage; ++i)
 //		SetPageReserved(pages+i);
@@ -92,8 +93,8 @@ static void page_init(void)
 			if(free_end > KMEMSIZE) free_end = KMEMSIZE;
 			if(begin < free_end)
 			{
-				begin = ROUND_UP(begin, PGSIZE);
-				free_end = ROUND_DOWN(free_end, PGSIZE);
+				begin = ROUNDUP(begin, PGSIZE);
+				free_end = ROUNDDOWN(free_end, PGSIZE);
 				if(begin < free_end) {
 					cprintf("------- begin:%8llx free_end:%8llx\n", begin, free_end);
 					init_memmap(pa2page(begin), (free_end-begin)/PGSIZE);
@@ -149,9 +150,9 @@ gdt_init(void) {
 
 static void map_physical_memory(uintptr_t *pgdir, uintptr_t la, size_t size, uintptr_t pa, uint32_t perm)
 {
-	size_t n = ROUND_UP(size + PG_OFF(la), PGSIZE) /PGSIZE;
-	la = ROUND_DOWN(la, PGSIZE);
-	pa = ROUND_DOWN(pa, PGSIZE);
+	size_t n = ROUNDUP(size + PG_OFF(la), PGSIZE) /PGSIZE;
+	la = ROUNDDOWN(la, PGSIZE);
+	pa = ROUNDDOWN(pa, PGSIZE);
 	for(; n>0; n--,la+=PGSIZE,pa+=PGSIZE)
 	{
 		uintptr_t *pte_p = get_pte(pgdir, la);
@@ -207,6 +208,8 @@ void pmm_init(void)
 
 	print_pgdir();
 	print_stackframe();
+
+	slab_init();
 }
 
 struct Page *alloc_pages(size_t n)

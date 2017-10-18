@@ -9,193 +9,172 @@
 #include <stdio.h>
 #include <string.h>
 #include <kerninfo.h>
+#include <slab.h>
+#include <math.h>
 
-struct BOOTINFO * get_bootinfo()
-{
-	return binfo;
-}
+/*********** global value ************/
+graphic_t *g = NULL;
 
-void draw_editbox(editbox_t eb);
 
-inline BOOL is_pixel_valid(int32_t x, int32_t y)
+
+/********* graphic library *******************/
+static inline BOOL is_pixel_valid(int32_t x, int32_t y)
 {
 	if(x<0 || y<0 || (uint32_t)x >= binfo->scrnx || (uint32_t)y >= binfo->scrny)
 		return FALSE;
 	return TRUE;
 }
 
-inline BOOL setpixel(int32_t x, int32_t y, rgb_t c)
+static void set_pixel(int x, int y, rgb_t c)
 {
-	// cprintf("vram:%x scrnx:%d scrny:%d\n", binfo->vram, binfo->scrnx, binfo->scrny);
-//	if(!is_pixel_valid(x, y))
-//		return FALSE;
-
+	if(!is_pixel_valid(x,y))
+		return;
 	int nBppixel = binfo->bitspixel>>3;
 	uint8_t * pvram = (uint8_t*)(binfo->vram + nBppixel*binfo->scrnx*y + nBppixel*x);
-	*pvram = c.r;
+	*pvram = c.b;
 	*(pvram+1) = c.g;
-	*(pvram+2) = c.b;
-	return TRUE;
+	*(pvram+2) = c.r;
 }
 
-rgb_t _gGetPixel(int32_t x, int32_t y)
+static rgb_t get_pixel(int32_t x, int32_t y)
 {
 	if(!is_pixel_valid(x,y))
 		return (rgb_t){0,0,0};
-	//uint8_t * pvram = binfo->vram + y*binfo->scrnx + x;
-	//return *pvram;
-	return (rgb_t){0,0,0};
+	uint8_t * pvram = binfo->vram + y*binfo->scrnx + x;
+	return (rgb_t){*pvram,*(pvram+1),*(pvram+2)};
 }
 
-rect_t _gGetScrnRect()
+static void draw_line(point_t p1, point_t p2, rgb_t c)
 {
-	rect_t rect;
-	rect.left = 0;
-	rect.top = 0;
-	rect.width = binfo->scrnx;
-	rect.height = binfo->scrny;
-	return rect;
-}
-
-
-void graphic_init()
-{
-	cprintf("graphic_init\n");
-	init_screen8();
-
-	draw_asc16('>', (point_t){22, 2}, MediumBlue);
-	draw_str16("Chill out!", (point_t){30, 2}, (rgb_t){32,33,22});
-
-  rgb_t buff[16*16];
-  init_mouse_cursor8(buff);
-  draw_mouse(buff);
-
-	char buf[100];
-	memset(buf,'\0',100);
-
-	editbox_t eb;
-	eb.point = (point_t){100,100};
-	eb.ch_x = 60;
-	eb.ch_y = 30;
-	eb.bg_c = Pink;
-	eb.text_c = Black;
-	eb.ch = buf;
-	eb.ch_size = 100;
-	eb.cur_x = eb.cur_y = 0;
-
-	draw_editbox(eb);
- 	getcontent(&eb);
-
-}
-
-void init_screen8()
-{
-	_gfillrect2((rgb_t){20,40,100}, (rect_t){0,0,binfo->scrnx,binfo->scrny});
-
-	_gdrawrect((rgb_t){100,100,100}, (rect_t){0, 0, 64, 700});
-
-	for(int i=0; i<10; i++)
-	{
-		_gfillrect2((rgb_t){200,220,10}, (rect_t){2, 2+70*i, 60, 60});
-		_gdrawrect((rgb_t){32,33,44}, (rect_t){2, 2+70*i, 60, 60});
+	if(p2.x<p1.x || p2.y<p1.y) {
+		draw_line(p2, p1, c);
+		return;
 	}
 
-	_gdrawline((rgb_t){211,22,32}, (point_t){100, 70}, (point_t){800, 70});
-	draw_str16("Rolling in the deep", (point_t){120,20}, Black);
-
-	return;
-}
-
-void draw_editbox(editbox_t eb) {
-	_gfillrect2(eb.bg_c, (rect_t){eb.point.x, eb.point.y, eb.ch_x*ASC16_WIDTH, eb.ch_y*ASC16_HEIGHT});
-}
-
-void draw_mouse(rgb_t *mouse)
-{
-	rect_t rect = {30,40,16,16};
-	_gfillrect(mouse, rect);
-}
-
-void _gdrawline(rgb_t c, point_t p1, point_t p2)
-{
 	BOOL type = (p2.x-p1.x) > (p2.y-p1.y);
 	if(type) {
 		float yt1 = p1.y, dy = (float)(p2.y-p1.y)/(p2.x-p1.x);
 		int xt1=p1.x;
 		for(;yt1<=p2.y && xt1<=p2.x; yt1+=dy, xt1++)
-			setpixel(xt1,yt1,c);
+			set_pixel(xt1,yt1,c);
 	} else{
 		float xt2 = p1.x, dx = (float)(p2.x-p1.x)/(p2.y-p1.y);
 		int yt2 = p1.y;
 		for(;xt2<=p2.x && yt2<=p2.y; xt2+=dx, yt2++)
-			setpixel(xt2, yt2,c);
+			set_pixel(xt2, yt2,c);
 	}
-
-
 }
 
-void _gdrawrect(rgb_t c, rect_t	rect)
+static void draw_rect(rect_t rect, rgb_t c)
 {
-	int x1 = rect.left, x2 = rect.left+rect.width-1;
-	int y1 = rect.top, y2 = rect.top+rect.height-1;
-	_gdrawline(c, (point_t){x1, y1}, (point_t){x2, y1});
-	_gdrawline(c, (point_t){x1, y1}, (point_t){x1, y2});
-	_gdrawline(c, (point_t){x2, y1}, (point_t){x2, y2});
-	_gdrawline(c, (point_t){x1, y2}, (point_t){x2, y2});
+	point_t p1 = rect.p;
+	point_t p2 = (point_t){p1.x, p1.y+rect.height-1};
+	point_t p3 = (point_t){p1.x+rect.width-1, p1.y};
+	point_t p4 = (point_t){p1.x+rect.width-1, p1.y+rect.height-1};
+	draw_line(p1, p2, c);
+	draw_line(p2, p4, c);
+	draw_line(p4, p3, c);
+	draw_line(p3, p1, c);
 }
 
-void _gfillrect(rgb_t *buf, rect_t rect)
+static void fill_rect(rect_t rect, rgb_t c)
 {
-	for(int x=rect.left; x<rect.left+rect.width; x++)
-		for(int y=rect.top; y<rect.top+rect.height; y++)
-			setpixel(x, y, buf[(x-rect.left) + rect.width*(y-rect.top)]);
-}
+	int nBppixel = binfo->bitspixel>>3;
+	int scrnx = binfo->scrnx;
+	int scrny = binfo->scrny;
+	int left = rect.p.x, right = rect.p.x+rect.width-1;
+	int top = rect.p.y, bottom = rect.p.y+rect.height-1;
 
-void _gfillrect2(rgb_t c, rect_t rect)
-{
-	for(int x=rect.left; x<rect.left+rect.width; x++)
-		for(int y=rect.top; y<rect.top+rect.height; y++) {
-			// cprintf(".");
-			setpixel(x, y, c);
+	if(left>right || top>bottom || left>scrnx-1 || top>scrny-1) return;
+	if(left < 0) left = 0;
+	if(top < 0) top = 0;
+	if(right > scrnx-1) right = scrnx-1;
+	if(bottom > scrny-1) bottom = scrny-1;
 
-		}
+	uint8_t * vram = (uint8_t*)binfo->vram;
+	uint8_t *pvram = vram;
 
-}
-
-void init_mouse_cursor8(rgb_t *mouse)
-{
-	static char cursor[16][16] = {
-		"**************..",
-		"*OOOOOOOOOOO*...",
-		"*OOOOOOOOOO*....",
-		"*OOOOOOOOO*.....",
-		"*OOOOOOOO*......",
-		"*OOOOOOO*.......",
-		"*OOOOOOO*.......",
-		"*OOOOOOOO*......",
-		"*OOOO**OOO*.....",
-		"*OOO*..*OOO*....",
-		"*OO*....*OOO*...",
-		"*O*......*OOO*..",
-		"**........*OOO*.",
-		"*..........*OOO*",
-		"............*OO*",
-		".............***"
-	};
-	int x, y;
-
-	for (y = 0; y < 16; y++) {
-		for (x = 0; x < 16; x++) {
-			if (cursor[y][x] == '*') {
-				mouse[y * 16 + x] = LightPink;
-			}
-			if (cursor[y][x] == 'O') {
-				mouse[y * 16 + x] = Navy;
-			}
-			if (cursor[y][x] == '.') {
-				mouse[y * 16 + x] = BlueViolet;
-			}
+	for (size_t i = top; i <= bottom; i++) {
+		for (size_t j = left; j <= right; j++) {
+			pvram = (uint8_t*)(vram + nBppixel*(scrnx*i+j));
+			*pvram = c.b;
+			*(pvram+1) = c.g;
+			*(pvram+2) = c.r;
 		}
 	}
-	return;
+}
+
+static void draw_bitmap(rect_t rect, bitmap_t * pbmp)
+{
+	uint8_t * pbmp_addr = (uint8_t*)pbmp+pbmp->file_head.bf_offset_bits;
+	uint32_t nbit = pbmp->info_head.bi_bit_count;
+	if(nbit != 24) return;
+	uint32_t width = abs(pbmp->info_head.bi_width);
+	uint32_t height = abs(pbmp->info_head.bi_height);
+
+	size_t nBpline = ((width*nbit + 31) >> 5) << 2;
+
+	size_t x0 = rect.p.x, y0 = rect.p.y;
+	if(width > rect.width) width = rect.width;
+	if(height > rect.height) height = rect.height;
+
+	int nBppixel = binfo->bitspixel>>3;
+	int scrnx = binfo->scrnx;
+	int scrny = binfo->scrny;
+
+	if(x0+width > scrnx) width = scrnx-x0-1;
+	if(y0+height > scrny) height = scrny-y0-1;
+
+	uint8_t * vram = (uint8_t*)binfo->vram;
+	uint8_t *pvram = vram;
+	uint8_t *pdata = pbmp_addr;
+	for (size_t i = 0; i < width; i++) {
+		for (size_t j = 0; j < height; j++) {
+			pvram = (uint8_t*)(vram + nBppixel*(scrnx*(y0+j)+x0+i));
+			pdata = (uint8_t*)(pbmp_addr + nBpline*j + i*3);
+			*pvram = *pdata;
+			*(pvram+1) = *(pdata+1);
+			*(pvram+2) = *(pdata+2);
+		}
+	}
+}
+
+static void fill_bitmap(rect_t rect, bitmap_t * pbmp)
+{
+	uint32_t width = abs(pbmp->info_head.bi_width);
+	uint32_t height = abs(pbmp->info_head.bi_height);
+
+	size_t x = rect.p.x, y = rect.p.y;
+	while (x<rect.p.x+rect.width) {
+		y = rect.p.y;
+		while (y<rect.p.y+rect.height) {
+			draw_bitmap(RECT(x,y,width,height), pbmp);
+			y += height;
+		}
+		x += width;
+	}
+}
+
+
+
+/************* get ***************/
+graphic_t * get_graphic()
+{
+	if(!g) {
+		g = (graphic_t*) kmalloc(sizeof(graphic_t));
+		g->set_pixel = set_pixel;
+		g->get_pixel = get_pixel;
+		g->draw_line = draw_line;
+		g->draw_rect = draw_rect;
+		g->fill_rect = fill_rect;
+		g->draw_bitmap = draw_bitmap;
+		g->fill_bitmap = fill_bitmap;
+	}
+	return g;
+}
+
+rect_t get_scrn_rect()
+{
+	rect_t rect = RECT(0, 0, binfo->scrnx, binfo->scrny);
+	return rect;
 }

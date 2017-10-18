@@ -1,5 +1,6 @@
 #include <stringbuffer.h>
 #include <string.h>
+#include <stdio.h>
 
 
 void buffer_init(StringBuffer *sb, char *buf, int size)
@@ -21,7 +22,7 @@ void buffer_push(StringBuffer *sb, char ch)
 	*(sb->top++) = ch;
 }
 
-char buffer_pop(StringBuffer *sb) 
+char buffer_pop(StringBuffer *sb)
 {
 	if(sb->top == sb->base) return 0;
 	return *(--sb->top);
@@ -36,6 +37,7 @@ void keybuf_init(keybuf_t *pkb)
 
 bool keybuf_push(keybuf_t *pkb, char ch)
 {
+	cprintf("keybuf: %x  ch:%c\n", pkb, ch);
 	if(pkb->front-pkb->rear == 1)
 		return 0;
 	if((pkb->front==0 && pkb->rear==31))
@@ -43,6 +45,7 @@ bool keybuf_push(keybuf_t *pkb, char ch)
 	pkb->data[pkb->rear] = ch;
 	if(++pkb->rear == 32)
 		pkb->rear = 0;
+	cprintf("hello\n");
 	return 1;
 }
 

@@ -37,6 +37,13 @@ void print_pgdir(void);
 #define VADDR(kpa) ({uintptr_t __m_kpa = (uintptr_t)(kpa); \
 					__m_kpa + KERNBASE;})
 
+/* *
+ * KADDR - takes a physical address and returns the corresponding kernel virtual address. It panics if you pass an invalid physical address.
+ * */
+#define KADDR(pa) ({                                                    \
+			uintptr_t __m_pa = (pa);                                    \
+			(void *) (__m_pa + KERNBASE);                               \
+})
 
 static inline struct Page* n2page(int n)
 {
@@ -72,4 +79,14 @@ static inline struct Page * pte2page(uintptr_t pte)
 static inline struct Page * pde2page(uintptr_t pde)
 {
 	return pa2page(PDE_ADDR(pde));
+}
+
+static inline void *
+page2kva(struct Page *page) {
+    return KADDR(page2pa(page));
+}
+
+static inline struct Page *
+kva2page(void *kva) {
+    return pa2page(PADDR(kva));
 }

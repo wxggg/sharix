@@ -121,7 +121,8 @@ KINCLUDE	+= kern/debug/ \
 			   kern/font \
 			   kern/component \
 			   kern/mm 	\
-			   kern/init
+			   kern/init \
+				 kern/sync
 
 KSRCDIR		+= kern/init \
 			   kern/libs \
@@ -144,7 +145,7 @@ kernel = $(call totarget,kernel)
 
 $(kernel): tools/kernel.ld
 
-$(kernel): $(KOBJS) 
+$(kernel): $(KOBJS)
 	@echo + ld $@
 	$(V)$(LD) $(LDFLAGS) -T tools/kernel.ld -o $@ $(KOBJS)
 	@$(OBJDUMP) -S $@ > $(call asmfile,kernel)
@@ -285,4 +286,3 @@ handin: packall
 packall: clean
 	@$(RM) -f $(HANDIN)
 	@tar -czf $(HANDIN) `find . -type f -o -type d | grep -v '^\.*$$' | grep -vF '$(HANDIN)'`
-

@@ -1,5 +1,9 @@
 #pragma once
 
+/* Eflags register */
+#define FL_IF           0x00000200  // Interrupt Flag
+
+
 /* Application segment type bits */
 #define STA_X           0x8         // Executable segment
 #define STA_E           0x4         // Expand down (non-executable segments)
@@ -135,6 +139,8 @@ struct taskstate {
 
 #define PDX(la) ((((uintptr_t)(la)) >> 22) & 0x3FF)
 #define PTX(la) ((((uintptr_t)(la)) >> 12) & 0x3FF)
+// page number field of address
+#define PPN(la) (((uintptr_t)(la)) >> 12)
 
 #define PTE_ADDR(pte)   ((uintptr_t)(pte) & ~0xFFF)
 #define PDE_ADDR(pde)   PTE_ADDR(pde)
@@ -174,4 +180,3 @@ struct taskstate {
 #define CR0_NW          0x20000000              // Not Writethrough
 #define CR0_CD          0x40000000              // Cache Disable
 #define CR0_PG          0x80000000              // Paging
-

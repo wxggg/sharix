@@ -36,7 +36,3 @@ io_out8: # void io_out8(int port, int data)
 	movb 8(%esp), %al
 	outb %al, %dx
 	ret
-
-set_pixel: # int set_pixel()
-	movl $0xaaaaaaaa, %eax
-	ret

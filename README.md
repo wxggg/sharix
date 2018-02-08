@@ -11,24 +11,24 @@
 
 ## Prework
 &emsp;&emsp;As we all know that operating system is actually a complex and basic program which is quite close to the hardware. So to build a simple os, we need to know about the cpu and some hardware mechanism. Otherwise it is very useful to learn the AT&T assembling language, this will be really helpful at the begin and even later part of sharix.Here are something that you may want to know before making an operating system.
-* a. [C program compile and assembling](/blogs/programing&c&compile)
+* a. [C program compile and assembling](www.sharix.site/blogs/programing&c&compile)
 
 ## Bios
 At the beginning of turn on the power -- what the bios has done fore us.
 
 ## Boot
-* a. [boot](/blogs/sharix&boot)
-* b. [real mode and protected mode](/blogs/sharix&real_protected_mode)
+* a. [boot](www.sharix.site/blogs/sharix&boot)
+* b. [real mode and protected mode](www.sharix.site/blogs/sharix&real_protected_mode)
 
 ## Memory
-* a. [gdt](/blogs/sharix&gdt)
-* b. [memory management](/blogs/sharix&memory)
-* c. [paging](/blogs/sharix&paging)
+* a. [gdt](www.sharix.site/blogs/sharix&gdt)
+* b. [memory management](www.sharix.site/blogs/sharix&memory)
+* c. [paging](www.sharix.site/blogs/sharix&paging)
 
 ## Interrupt
-* a. [interrupt](/blogs/sharix&interrupt)
+* a. [interrupt](www.sharix.site/blogs/sharix&interrupt)
 
 ## Process
-* a. [kernel thread](/blogs/sharix&process)
+* a. [kernel thread](www.sharix.site/blogs/sharix&process)
 
 ***

@@ -1,5 +1,4 @@
-#ifndef __LIBS_ERROR_H__
-#define __LIBS_ERROR_H__
+#pragma once
 
 /* kernel error codes -- keep in sync with list in lib/printfmt.c */
 #define E_UNSPECIFIED       1   // Unspecified or unknown problem
@@ -12,5 +11,6 @@
 /* the maximum allowed */
 #define MAXERROR            6
 
-#endif /* !__LIBS_ERROR_H__ */
-
+#define E_INVAL             3   // Invalid parameter
+#define E_NO_MEM            4   // Request failed due to memory shortage
+#define E_FAULT             6   // Memory fault

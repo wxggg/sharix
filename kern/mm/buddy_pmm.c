@@ -33,7 +33,7 @@ static void buddy_init_memmap(struct Page *base, size_t n)
 			n -= order_size;
 			nr_free(order)++;
 
-			cprintf("list order=%d ++\n", order);
+			// cprintf("list order=%d ++\n", order);
 		}
 		--order;
 		order_size >>= 1;
@@ -41,8 +41,8 @@ static void buddy_init_memmap(struct Page *base, size_t n)
 }
 static inline struct Page* buddy_alloc_pages_sub(size_t order)
 {
-	if(order>MAX_ORDER)
-		cprintf("buddy_alloc_page_sub order ERROR\n");
+	if(order>MAX_ORDER);
+		// cprintf("buddy_alloc_page_sub order ERROR\n");
 	for(size_t i=order; i<=MAX_ORDER; i++) {
 		if(!list_empty(&free_list(i))) {
 			list_entry_t *le = list_next(&free_list(i));
@@ -94,14 +94,14 @@ static void buddy_free_pages_sub(struct Page *base, size_t order)
 				nr_free(i) --;
 				p = buddy;
 				p->order ++;
-				cprintf("left match\n");
+				// cprintf("left match\n");
 				break;
 			}
 			else if(p+p_size == buddy) {
 				list_del(&(buddy->page_link));
 				nr_free(i) --;
 				p->order ++;
-				cprintf("right match\n");
+				// cprintf("right match\n");
 				break;
 			}
 			else {
@@ -128,7 +128,6 @@ static struct Page * buddy_alloc_pages(size_t n)
 
 static void buddy_free_pages(struct Page *base, size_t n)
 {
-	cprintf("buddy_free_pages base:%x n:%d  ", base, n);
 	if (n==1) {
 		buddy_free_pages_sub(base, 0);
 	}
@@ -163,7 +162,7 @@ static void buddy_pageinfo(void)
 {
 	for (int i = 0; i <= MAX_ORDER; ++i)
 	{
-		cprintf("order:%d nr_free:%d\n", i, nr_free(i));
+		// cprintf("order:%d nr_free:%d\n", i, nr_free(i));
 	}
 }
 

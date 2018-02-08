@@ -15,21 +15,34 @@ struct pmm_manager
 	void (*pageinfo)(void);
 };
 
+// global value
 extern const struct pmm_manager *pmm_manager;
 extern struct Page *pages;
 extern char bootstack[], bootstacktop[];
+extern uintptr_t *boot_pgdir;
+extern uintptr_t boot_cr3;
 
 void pmm_init(void);
 
 struct Page *alloc_pages(size_t n);
 #define alloc_page() alloc_pages(1)
-void pageinfo();
-
 void free_pages(struct Page *base, size_t n);
 #define free_page(page) free_pages(page, 1)
 
+uintptr_t * get_pte(uintptr_t *pgdir, uintptr_t la);
+int page_insert(uintptr_t *pgdir, struct Page *page, uintptr_t la, uint32_t perm);
+void page_remove(uintptr_t *pgdir, uintptr_t la);
+
+
+
+void pageinfo();
+
+
 void tlb_invalidate(uintptr_t *pgdir, uintptr_t la);
 void print_pgdir(void);
+
+
+
 
 #define PADDR(kva) ({uintptr_t __m_kva = (uintptr_t)(kva); \
 					__m_kva - KERNBASE;})

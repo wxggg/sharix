@@ -113,26 +113,28 @@ $(call add_files_cc,$(call listf_cc,$(LIBDIR)),libs,)
 # -------------------------------------------------------------------
 # kernel
 
-KINCLUDE	+= kern/debug/ \
-			   kern/driver/ \
-			   kern/trap/	\
-			   kern/graphic \
-			   kern/libs	\
-			   kern/font \
-			   kern/component \
-			   kern/mm 	\
-			   kern/init \
-				 kern/sync
+KINCLUDE	+= 	kern/debug/ \
+				kern/driver/ \
+				kern/trap/	\
+				kern/graphic \
+				kern/libs	\
+				kern/font \
+				kern/component \
+				kern/mm 	\
+				kern/init \
+				kern/sync \
+				kern/process
 
 KSRCDIR		+= kern/init \
-			   kern/libs \
-			   kern/debug \
-			   kern/driver \
-			   kern/trap   \
-			   kern/graphic \
-			   kern/font \
-			   kern/component \
-			   kern/mm
+				kern/libs \
+				kern/debug \
+				kern/driver \
+				kern/trap   \
+				kern/graphic \
+				kern/font \
+				kern/component \
+				kern/mm	\
+				kern/process	
 
 KCFLAGS		+= $(addprefix -I,$(KINCLUDE))
 
@@ -274,6 +276,7 @@ print-%:
 
 .PHONY: clean dist-clean handin packall
 clean:
+	find . -type f | xargs touch
 	$(V)$(RM) $(GRADE_GDB_IN) $(GRADE_QEMU_OUT)
 	-$(RM) -r $(OBJDIR) $(BINDIR)
 

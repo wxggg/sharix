@@ -135,8 +135,8 @@ load_esp0(uintptr_t esp0) {
 static void
 gdt_init(void) {
     // set boot kernel stack and default SS0
-    load_esp0((uintptr_t)bootstacktop);
-    ts.ts_ss0 = KERNEL_DS;
+    // load_esp0((uintptr_t)bootstacktop);
+    // ts.ts_ss0 = KERNEL_DS;
 
     // initialize the TSS filed of the gdt
     gdt[SEG_TSS] = SEGTSS(STS_T32A, (uintptr_t)&ts, sizeof(ts), DPL_KERNEL);
@@ -145,7 +145,7 @@ gdt_init(void) {
     lgdt(&gdt_pd);
 
     // load the TSS
-    ltr(GD_TSS);
+    // ltr(GD_TSS);
 }
 
 static void map_physical_memory(uintptr_t *pgdir, uintptr_t la, size_t size, uintptr_t pa, uint32_t perm)
@@ -253,13 +253,13 @@ struct Page * get_page(uintptr_t *pgdir, uintptr_t la)
 
 static inline void page_remove_pte(uintptr_t *pgdir, uintptr_t la, uintptr_t * pte_p)
 {
-	cprintf("page_remove_pte   la:%x pte_p:%x *pte_p:%x\n", la, pte_p, *pte_p);
+	// cprintf("page_remove_pte   la:%x pte_p:%x *pte_p:%x\n", la, pte_p, *pte_p);
 	if(*pte_p & PTE_P) {
 		*pte_p = 0;
 		tlb_invalidate(pgdir, la);
 	}
 }
-static inline void page_remove(uintptr_t *pgdir, uintptr_t la)
+void page_remove(uintptr_t *pgdir, uintptr_t la)
 {
 	uintptr_t *pte_p = get_pte(pgdir, la);
 	if(pte_p != NULL)
@@ -285,19 +285,19 @@ void tlb_invalidate(uintptr_t *pgdir, uintptr_t la)
 static void check_pgdir(void)
 {
 	struct Page* p = get_page(boot_pgdir, 0x0);
-	cprintf("p:%x\n", p);
+	// cprintf("p:%x\n", p);
 
 	struct Page *p1 = alloc_page();
 	page_insert(boot_pgdir, p1, 0x0, PTE_W);
 
 	uintptr_t *pte_p = get_pte(boot_pgdir, 0x0);
-	cprintf("*pte_p:%x pa2page(*pte_p):%x p1:%x  \n", *pte_p, pa2page(*pte_p), p1);
-	cprintf("pte_p:%x  newpte_p:%x\n", pte_p, get_pte(boot_pgdir, 0));
+	// cprintf("*pte_p:%x pa2page(*pte_p):%x p1:%x  \n", *pte_p, pa2page(*pte_p), p1);
+	// cprintf("pte_p:%x  newpte_p:%x\n", pte_p, get_pte(boot_pgdir, 0));
 
 	struct Page *p2 = alloc_page();
 	page_insert(boot_pgdir, p2, PGSIZE, PTE_W);
 	pte_p = get_pte(boot_pgdir, PGSIZE);
-	cprintf("*pte_p:%x pa2page(*pte_p):%x p2:%x  \n", *pte_p, pa2page(*pte_p), p2);
+	// cprintf("*pte_p:%x pa2page(*pte_p):%x p2:%x  \n", *pte_p, pa2page(*pte_p), p2);
 
 //	page_insert(boot_pgdir, p1, PGSIZE);
 //	pte_p = get_pte(boot_pgdir, PGSIZE);
@@ -318,12 +318,12 @@ void check_boot_pgdir()
 	for(i=0; i<npage; i+=PGSIZE)
 	{
 		pte_p = get_pte(boot_pgdir, (uintptr_t)VADDR(i));
-		cprintf("pte_p:%x   i:%x", pte_p, i);
-		if(PTE_ADDR(*pte_p) == i)
-			cprintf("   *pte_p:%x \n", *pte_p);
+		// cprintf("pte_p:%x   i:%x", pte_p, i);
+		if(PTE_ADDR(*pte_p) == i);
+			// cprintf("   *pte_p:%x \n", *pte_p);
 	}
 
-	cprintf("%x\n", boot_pgdir[0]);
+	// cprintf("%x\n", boot_pgdir[0]);
 
 	struct Page *p;
 	p = alloc_page();
@@ -337,11 +337,11 @@ void check_boot_pgdir()
 	*c = 'c'; //test for write
 	strcpy((void*)0x100, str);
 	int ret = strcmp((void*)0x100, (void*)(0x100));
-	cprintf("ret:%d str:%s str2:%s\n", ret, str, (char*)(0x100+3));
-	cprintf("pa of p: %x\n", page2pa(p));
+	// cprintf("ret:%d str:%s str2:%s\n", ret, str, (char*)(0x100+3));
+	// cprintf("pa of p: %x\n", page2pa(p));
 //	*(char*)(page2va(p) + 0x100) = '\0';
 	ret = strlen((const char*)0x100);
-	cprintf("ret:%x", ret);
+	// cprintf("ret:%x", ret);
 
 	free_page(p);
 	free_page(pa2page(PDE_ADDR(boot_pgdir[0])));

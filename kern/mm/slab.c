@@ -1,7 +1,6 @@
 #include <types.h>
 #include <list.h>
 #include <memlayout.h>
-#include <assert.h>
 #include <slab.h>
 #include <sync.h>
 #include <pmm.h>
@@ -192,7 +191,6 @@ calculate_slab_order(kmem_cache_t *cachep, size_t objsize, size_t align, bool of
                 size_t off_slab_limit = objsize - sizeof(slab_t);
                 off_slab_limit /= sizeof(kmem_bufctl_t);
                 if (num > off_slab_limit) {
-                    panic("off_slab: objsize = %d, num = %d.", objsize, num);
                 }
             }
             if (remainder * 8 <= (PGSIZE << order)) {
@@ -205,7 +203,6 @@ calculate_slab_order(kmem_cache_t *cachep, size_t objsize, size_t align, bool of
             }
         }
     }
-    panic("calculate_slab_over: failed.");
 }
 
 // getorder - find order, should satisfy n <= minest 2^order
@@ -217,7 +214,7 @@ getorder(size_t n) {
             return order;
         }
     }
-    panic("getorder failed. %d\n", n);
+    return -1;
 }
 
 // init_kmem_cache - initial a slab_cache cachep according to the obj with the size = objsize
@@ -232,8 +229,6 @@ init_kmem_cache(kmem_cache_t *cachep, size_t objsize, size_t align) {
 
     size_t left_over;
     calculate_slab_order(cachep, objsize, align, cachep->off_slab, &left_over);
-
-    assert(cachep->num > 0);
 
     size_t mgmt_size = slab_mgmt_size(cachep->num, align);
 
@@ -376,7 +371,6 @@ alloc_new_slab:
 //         - to allocate a free memory using kmem_cache_alloc function
 void *
 kmalloc(size_t size) {
-    assert(size > 0);
     size_t order = getorder(size);
     if (order > MAX_SIZE_ORDER) return NULL;
 
@@ -393,7 +387,6 @@ kmem_slab_destroy(kmem_cache_t *cachep, slab_t *slabp) {
     struct Page *p = page;
     size_t order_size = (1 << cachep->page_order);
     do {
-        assert(PageSlab(p));
         ClearPageSlab(p);
         p ++;
     } while (-- order_size);
@@ -439,7 +432,6 @@ kmem_cache_free(kmem_cache_t *cachep, void *objp) {
     struct Page *page = kva2page(objp);
 
     if (!PageSlab(page)) {
-        panic("not a slab page %08x\n", objp);
     }
     local_intr_save(intr_flag);
     {

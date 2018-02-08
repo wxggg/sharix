@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <slab.h>
 #include <rb_tree.h>
-#include <assert.h>
 
 /* rb_node_create - create a new rb_node */
 static inline rb_node *
@@ -28,7 +27,6 @@ rb_tree_empty(rb_tree *tree) {
  * */
 rb_tree *
 rb_tree_create(int (*compare)(rb_node *node1, rb_node *node2)) {
-    assert(compare != NULL);
 
     rb_tree *tree;
     rb_node *nil, *root;
@@ -80,7 +78,6 @@ bad_tree:
 static void                                                     \
 	func_name(rb_tree *tree, rb_node *x) {                          \
     rb_node *nil = tree->nil, *y = x->_right;                   \
-    assert(x != tree->root && x != nil && y != nil);            \
     x->_right = y->_left;                                       \
 		if (y->_left != nil) {                                      \
         y->_left->parent = x;                                   \
@@ -94,7 +91,6 @@ static void                                                     \
     }                                                           \
     y->_left = x;                                               \
     x->parent = y;                                              \
-    assert(!(nil->red));                                        \
 }
 
 FUNC_ROTATE(rb_left_rotate, left, right);
@@ -166,7 +162,6 @@ rb_insert(rb_tree *tree, rb_node *node) {
 			}
 		}
     tree->root->left->red = 0;
-    assert(!(tree->nil->red) && !(tree->root->red));
 
 #undef RB_INSERT_SUB
 }
@@ -295,12 +290,11 @@ rb_delete_fixup(rb_tree *tree, rb_node *node) {
 void
 rb_delete(rb_tree *tree, rb_node *node) {
     rb_node *x, *y, *z = node;
-    rb_node *nil = tree->nil, *root = tree->root;
+    rb_node *nil = tree->nil;//, *root = tree->root;
 
     y = (z->left == nil || z->right == nil) ? z : rb_tree_successor(tree, z);
     x = (y->left != nil) ? y->left : y->right;
 
-    assert(y != root && y != nil);
 
     x->parent = y->parent;
     if (y == y->parent->left) {
@@ -380,23 +374,16 @@ int
 check_tree(rb_tree *tree, rb_node *node) {
     rb_node *nil = tree->nil;
     if (node == nil) {
-        assert(!node->red);
         return 1;
     }
     if (node->left != nil) {
-        assert(COMPARE(tree, node, node->left) >= 0);
-        assert(node->left->parent == node);
     }
     if (node->right != nil) {
-        assert(COMPARE(tree, node, node->right) <= 0);
-        assert(node->right->parent == node);
     }
     if (node->red) {
-        assert(!node->left->red && !node->right->red);
     }
     int hb_left = check_tree(tree, node->left);
-    int hb_right = check_tree(tree, node->right);
-    assert(hb_left == hb_right);
+//    int hb_right = check_tree(tree, node->right);
     int hb = hb_left;
     if (!node->red) {
         hb ++;
@@ -407,7 +394,6 @@ check_tree(rb_tree *tree, rb_node *node) {
 static void *
 check_safe_kmalloc(size_t size) {
     void *ret = kmalloc(size);
-    assert(ret != NULL);
     return ret;
 }
 
@@ -432,10 +418,8 @@ check_compare2(rb_node *node, void *key) {
 void
 check_rb_tree(void) {
     rb_tree *tree = rb_tree_create(check_compare1);
-    assert(tree != NULL);
 
-    rb_node *nil = tree->nil, *root = tree->root;
-    assert(!nil->red && root->left == nil);
+    rb_node *root = tree->root;
 
     int total = 1000;
     struct check_data **all = check_safe_kmalloc(sizeof(struct check_data *) * total);
@@ -453,7 +437,6 @@ check_rb_tree(void) {
         mark[all[i]->data] = 1;
     }
     for (i = 0; i < total; i ++) {
-        assert(mark[i] == 1);
     }
 
     for (i = 0; i < total; i ++) {
@@ -468,7 +451,6 @@ check_rb_tree(void) {
         mark[all[i]->data] = 1;
     }
     for (i = 0; i < total; i ++) {
-        assert(mark[i] == 1);
     }
 
     for (i = 0; i < total; i ++) {
@@ -479,17 +461,14 @@ check_rb_tree(void) {
     rb_node *node;
     for (i = 0; i < total; i ++) {
         node = rb_search(tree, check_compare2, (void *)(all[i]->data));
-        assert(node != NULL && node == &(all[i]->rb_link));
     }
 
     for (i = 0; i < total; i ++) {
         node = rb_search(tree, check_compare2, (void *)i);
-        assert(node != NULL && rbn2data(node)->data == i);
         rb_delete(tree, node);
         check_tree(tree, root->left);
     }
 
-    assert(!nil->red && root->left == nil);
 
     long max = 32;
     if (max > total) {
@@ -504,12 +483,10 @@ check_rb_tree(void) {
 
     for (i = 0; i < max; i ++) {
         node = rb_search(tree, check_compare2, (void *)max);
-        assert(node != NULL && rbn2data(node)->data == max);
         rb_delete(tree, node);
         check_tree(tree, root->left);
     }
 
-    assert(rb_tree_empty(tree));
 
     for (i = 0; i < total; i ++) {
         rb_insert(tree, &(all[i]->rb_link));

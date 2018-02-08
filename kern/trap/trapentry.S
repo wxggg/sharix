@@ -35,6 +35,11 @@ __trapret:
     popl %ds
 
     # get rid of the trap number and error code
-    addl $0x8, %esp
+    addl $0x8, %esp # clean the size of 0x8 of stack
     iret
 
+.globl run_entrys
+run_entrys:
+  	# set stack to this new process's trapframe
+  	movl 4(%esp), %esp
+  	jmp __trapret

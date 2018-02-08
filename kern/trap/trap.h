@@ -32,6 +32,7 @@ struct trapframe
 	uint16_t tf_padding1;
 	uint16_t tf_ds;
 	uint16_t tf_padding2;
+	/* trapno are pushed in vectors.S to identify the trap*/
 	uint32_t tf_trapno;
 	/* below here defined by x86 hardware */
 	uint32_t tf_err;
@@ -46,3 +47,4 @@ struct trapframe
 } __attribute__((packed));
 
 void idt_init(void);
+void print_trapframe(struct trapframe *tf);

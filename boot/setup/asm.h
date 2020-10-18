@@ -1,5 +1,5 @@
-#ifndef __INTBIOS_ASM_H__
-#define __INTBIOS_ASM_H__
+#ifndef __setup_ASM_H__
+#define __setup_ASM_H__
 
 /* Assembler macros to create x86 segments */
 
@@ -25,5 +25,5 @@
 #define bootinfo_ad	0x0
 
 
-#endif /* !__INTBIOS_ASM_H__ */
+#endif /* !__setup_ASM_H__ */
 

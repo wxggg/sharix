@@ -31,7 +31,7 @@ read_a_sect_hd:
     int     $0x13
     ret
 
-read_intbios:
+read_setup:
 	lea		disk_addr_packet, %si
 	movw	$0x7e00>>4, 6(%si)
 	xorw 	%cx, %cx
@@ -53,7 +53,7 @@ loop:
 	ret 
 
 main:
-	call read_intbios
+	call read_setup
 	jmp 0x7e00
 
 spin:

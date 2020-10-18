@@ -158,56 +158,51 @@ $(call create_target,kernel)
 # -------------------------------------------------------------------
 
 # create bootblock
-bootfiles = $(call listf_cc,boot)
+bootfiles = $(call listf_cc,boot/boot)
 $(foreach f,$(bootfiles),$(call cc_compile,$(f),$(CC),$(CFLAGS) -Os -nostdinc))
 
 bootblock = $(call totarget,bootblock)
 
-$(bootblock): $(call toobj,boot/bootasm.S) $(call toobj,$(bootfiles)) | $(call totarget,sign)
+$(bootblock): $(call toobj,boot/boot/bootsect.S) $(call toobj,$(bootfiles)) | $(call totarget,resize_binary)
 	@echo + ld $@
 	$(V)$(LD) $(LDFLAGS) -N -e start -Ttext 0x7C00 $^ -o $(call toobj,bootblock)
 	@$(OBJDUMP) -S $(call objfile,bootblock) > $(call asmfile,bootblock)
 	@$(OBJCOPY) -S -O binary $(call objfile,bootblock) $(call outfile,bootblock)
-	@$(call totarget,sign) $(call outfile,bootblock) $(bootblock)
+	@$(call totarget,resize_binary) -i $(call outfile, bootblock) -o $(bootblock) -b
 
 $(call create_target,bootblock)
 
 # -------------------------------------------------------------------
 
-# create bootblock
-intbiosfiles = $(call listf_cc,intbios)
-$(foreach f,$(intbiosfiles),$(call cc_compile,$(f),$(CC),$(CFLAGS) -Os -nostdinc))
+setupfiles = $(call listf_cc,boot/setup)
+$(foreach f,$(setupfiles),$(call cc_compile,$(f),$(CC),$(CFLAGS) -Os -nostdinc))
 
-intbiosblock = $(call totarget,intbiosblock)
+setupblock = $(call totarget,setupblock)
 
-$(intbiosblock): $(call toobj,intbios/asmhead.S) $(call toobj,$(intbiosfiles)) | $(call totarget,sign_intbios)
+$(setupblock): $(call toobj,boot/setup/setup.S) $(call toobj,$(setupfiles)) | $(call totarget,resize_binary)
 	@echo + ld $@
-	$(V)$(LD) $(LDFLAGS) -N -e asmstart -Ttext 0x7E00 $^ -o $(call toobj,intbiosblock)
-	@$(OBJDUMP) -S $(call objfile,intbiosblock) > $(call asmfile,intbiosblock)
-	@$(OBJCOPY) -S -O binary $(call objfile,intbiosblock) $(call outfile,intbiosblock)
-	@$(call totarget,sign_intbios) $(call outfile,intbiosblock) $(intbiosblock)
+	$(V)$(LD) $(LDFLAGS) -N -e asmstart -Ttext 0x7e00 $^ -o $(call toobj,setupblock)
+	@$(OBJDUMP) -S $(call objfile,setupblock) > $(call asmfile,setupblock)
+	@$(OBJCOPY) -S -O binary $(call objfile,setupblock) $(call outfile,setupblock)
+	@$(call totarget,resize_binary) -i $(call outfile,setupblock) -o $(setupblock) -n 1024
 
-$(call create_target,intbiosblock)
+$(call create_target,setupblock)
 
 # -------------------------------------------------------------------
 
-# create 'sign' tools
-$(call add_files_host,tools/sign.c,sign,sign)
-$(call create_target_host,sign,sign)
-
-# create 'sign_intbios' tools
-$(call add_files_host,tools/sign_intbios.c,sign_intbios,sign_intbios)
-$(call create_target_host,sign_intbios,sign_intbios)
+# create 'resize_binary' tools
+$(call add_files_host,tools/resize_binary.c,resize_binary,resize_binary)
+$(call create_target_host,resize_binary,resize_binary)
 
 # -------------------------------------------------------------------
 
 # create ucore.img
 UCOREIMG	:= $(call totarget,ucore.img)
 
-$(UCOREIMG): $(kernel) $(bootblock) $(intbiosblock)
+$(UCOREIMG): $(bootblock) $(setupblock) $(kernel)
 	$(V)dd if=/dev/zero of=$@ bs=512 count=10000
 	$(V)dd if=$(bootblock) of=$@ conv=notrunc
-	$(V)dd if=$(intbiosblock) of=$@ bs=512 seek=1 conv=notrunc
+	$(V)dd if=$(setupblock) of=$@ bs=512 seek=1 conv=notrunc
 	$(V)dd if=$(kernel) of=$@ bs=512 seek=3 conv=notrunc
 	$(V)dd if=./res/ASC16 of=$@ bs=512 seek=8001 conv=notrunc
 	$(V)dd if=./res/icon.bmp of=$@ bs=512 seek=8009 conv=notrunc
